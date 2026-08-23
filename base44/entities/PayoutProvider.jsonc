@@ -1,0 +1,52 @@
+{
+  "name": "PayoutProvider",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the payout provider, e.g. FNB, MTC Mobile Money"
+    },
+    "provider_type": {
+      "type": "string",
+      "enum": [
+        "bank_account",
+        "mobile_wallet",
+        "ewallet",
+        "other"
+      ]
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "description": {
+      "type": "string"
+    },
+    "configuration": {
+      "type": "object",
+      "description": "Reserved for provider connection settings used by the payout gateway layer"
+    }
+  },
+  "required": [
+    "name",
+    "provider_type"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

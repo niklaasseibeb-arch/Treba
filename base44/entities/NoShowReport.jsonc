@@ -1,0 +1,152 @@
+{
+  "name": "NoShowReport",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string"
+    },
+    "trip_request_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "passenger_name": {
+      "type": "string"
+    },
+    "driver_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "allocation_id": {
+      "type": "string",
+      "description": "Scheduled service (Allocation) this no-show occurred on"
+    },
+    "route": {
+      "type": "string",
+      "description": "Origin \u2192 destination label"
+    },
+    "scheduled_departure": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "grace_minutes": {
+      "type": "number",
+      "default": 10
+    },
+    "reported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "driver_location": {
+      "type": "string",
+      "description": "Driver location where technically available (free text or coordinates)"
+    },
+    "driver_at_pickup": {
+      "type": "boolean",
+      "default": false
+    },
+    "grace_elapsed": {
+      "type": "boolean",
+      "default": false
+    },
+    "contact_attempted": {
+      "type": "boolean",
+      "default": false
+    },
+    "contact_attempts_count": {
+      "type": "number",
+      "default": 0
+    },
+    "no_show_status": {
+      "type": "string",
+      "enum": [
+        "reported",
+        "disputed",
+        "upheld",
+        "overturned",
+        "resolved"
+      ],
+      "default": "reported"
+    },
+    "dispute_reason": {
+      "type": "string"
+    },
+    "disputed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "review_decision": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "upheld",
+        "overturned"
+      ],
+      "default": "pending"
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "financial_outcome": {
+      "type": "string",
+      "description": "Description of the financial outcome applied per the no-show policy. Treba never auto-refunds."
+    },
+    "refund_amount": {
+      "type": "number",
+      "description": "Refund amount an admin may apply per policy. Never auto-processed."
+    }
+  },
+  "required": [
+    "booking_id",
+    "passenger_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

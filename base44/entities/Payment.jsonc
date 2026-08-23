@@ -1,0 +1,158 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile that operates the trip"
+    },
+    "trip_request_id": {
+      "type": "string",
+      "description": "Reference to the TripRequest this payment settles"
+    },
+    "agreed_fare": {
+      "type": "number",
+      "description": "The mutually-agreed fare being paid. Never estimated by Treba."
+    },
+    "agreed_fare_currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_card",
+        "mobile_wallet",
+        "pay2cell",
+        "other_digital",
+        "cash_to_driver"
+      ],
+      "description": "Category of payment method selected by the passenger"
+    },
+    "payment_category": {
+      "type": "string",
+      "enum": [
+        "digital",
+        "cash"
+      ],
+      "default": "digital"
+    },
+    "provider_code": {
+      "type": "string",
+      "description": "Code of the configured PaymentProvider used"
+    },
+    "provider_name": {
+      "type": "string"
+    },
+    "provider_intent_id": {
+      "type": "string",
+      "description": "Provider-side intent/transaction id (e.g. a Stripe PaymentIntent id). Never stores PIN, password or OTP."
+    },
+    "payment_reference": {
+      "type": "string",
+      "description": "Treba transaction reference"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "successful",
+        "failed",
+        "cancelled",
+        "refunded"
+      ],
+      "default": "pending"
+    },
+    "payment_provider": {
+      "type": "string"
+    },
+    "transaction_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failure_reason": {
+      "type": "string"
+    },
+    "cash_status": {
+      "type": "string",
+      "enum": [
+        "cash_pending",
+        "cash_overdue",
+        "cash_paid",
+        "cash_no_show"
+      ],
+      "description": "Controlled cash payment status"
+    },
+    "cash_check_in_deadline": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "booking_id",
+    "amount"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

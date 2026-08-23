@@ -1,0 +1,133 @@
+{
+  "name": "Allocation",
+  "type": "object",
+  "properties": {
+    "route_id": {
+      "type": "string",
+      "description": "Reference to the Route being covered"
+    },
+    "origin": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "departure_time": {
+      "type": "string"
+    },
+    "route_distance_km": {
+      "type": "number",
+      "default": 0
+    },
+    "allocated_driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile allocated to this slot"
+    },
+    "allocated_driver_name": {
+      "type": "string"
+    },
+    "allocated_driver_user_id": {
+      "type": "string",
+      "description": "User id of the allocated driver, used for row-level access"
+    },
+    "vehicle_id": {
+      "type": "string"
+    },
+    "vehicle_label": {
+      "type": "string",
+      "description": "Display label, e.g. 'Toyota Quantum (N12345)'"
+    },
+    "total_seats": {
+      "type": "number",
+      "default": 0
+    },
+    "available_seats": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "awaiting_confirmation",
+        "confirmed",
+        "declined",
+        "reassigned",
+        "completed",
+        "cancelled"
+      ],
+      "default": "awaiting_confirmation"
+    },
+    "replacement_driver_id": {
+      "type": "string"
+    },
+    "replacement_driver_name": {
+      "type": "string"
+    },
+    "declined_driver_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Drivers who declined this slot, excluded from reassignment"
+    },
+    "needs_replacement": {
+      "type": "boolean",
+      "default": false
+    },
+    "driver_response_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decline_reason": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "route_id",
+    "date",
+    "departure_time"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.allocated_driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.allocated_driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

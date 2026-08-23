@@ -1,0 +1,104 @@
+{
+  "name": "Vehicle",
+  "type": "object",
+  "properties": {
+    "driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile that owns this vehicle"
+    },
+    "registration_number": {
+      "type": "string"
+    },
+    "make": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "vehicle_type": {
+      "type": "string",
+      "enum": [
+        "sedan",
+        "suv",
+        "minibus",
+        "van",
+        "bus"
+      ]
+    },
+    "year": {
+      "type": "number"
+    },
+    "seating_capacity": {
+      "type": "number",
+      "default": 4
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "luggage_capacity": {
+      "type": "number",
+      "default": 0,
+      "description": "Approximate luggage capacity in large bags"
+    },
+    "insurance_info": {
+      "type": "string",
+      "description": "Insurance provider and policy reference"
+    },
+    "permit_info": {
+      "type": "string",
+      "description": "Operating permit / road transportation permit reference"
+    }
+  },
+  "required": [
+    "registration_number",
+    "make",
+    "model"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

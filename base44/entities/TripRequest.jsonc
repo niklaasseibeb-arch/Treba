@@ -1,0 +1,232 @@
+{
+  "name": "TripRequest",
+  "type": "object",
+  "properties": {
+    "passenger_id": {
+      "type": "string",
+      "description": "Reference to the PassengerProfile making the request"
+    },
+    "passenger_name": {
+      "type": "string"
+    },
+    "route_id": {
+      "type": "string",
+      "description": "Reference to the Route the request is against"
+    },
+    "origin": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "pickup_location": {
+      "type": "string"
+    },
+    "dropoff_location": {
+      "type": "string"
+    },
+    "pickup_is_standard": {
+      "type": "boolean",
+      "default": true
+    },
+    "dropoff_is_standard": {
+      "type": "boolean",
+      "default": true
+    },
+    "number_of_seats": {
+      "type": "number",
+      "default": 1
+    },
+    "luggage_small_bags": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of small personal bags"
+    },
+    "luggage_standard_bags": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of standard bags"
+    },
+    "luggage_large_suitcases": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of large suitcases"
+    },
+    "luggage_oversized_items": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of oversized or bulky items"
+    },
+    "luggage_weight_category": {
+      "type": "string",
+      "enum": [
+        "small_personal",
+        "standard",
+        "large",
+        "oversized",
+        "heavy"
+      ],
+      "description": "Approximate overall weight/size category"
+    },
+    "luggage_details": {
+      "type": "string",
+      "description": "Additional free-text luggage description"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "digital"
+      ]
+    },
+    "requested_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "requested_time": {
+      "type": "string"
+    },
+    "request_status": {
+      "type": "string",
+      "enum": [
+        "requested",
+        "pending",
+        "matched",
+        "driver_accepted",
+        "driver_responded",
+        "booked",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "negotiation_state": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "negotiation_open",
+        "offer_made",
+        "counter_offer",
+        "accepted",
+        "declined",
+        "expired",
+        "cancelled",
+        "fare_agreed"
+      ],
+      "default": "not_started",
+      "description": "Current state of the fare negotiation engine"
+    },
+    "negotiated_fare": {
+      "type": "number",
+      "description": "Fare agreed between passenger and driver during negotiation. Never calculated or estimated by Treba."
+    },
+    "agreed_fare": {
+      "type": "number",
+      "description": "The locked, mutually-agreed fare. Set only when both parties accept the same amount."
+    },
+    "agreed_fare_currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "agreed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "booking_id": {
+      "type": "string",
+      "description": "Reference to the Booking created when the fare was agreed"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "Payment status for the agreed fare"
+    },
+    "matched_allocation_id": {
+      "type": "string",
+      "description": "Reference to the Allocation the demand matching engine assigned this request to"
+    },
+    "matched_driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile the request was sent to"
+    },
+    "matched_driver_name": {
+      "type": "string"
+    },
+    "matched_driver_user_id": {
+      "type": "string",
+      "description": "User id of the matched driver, used for directed routing and driver-side access"
+    },
+    "matched_vehicle_id": {
+      "type": "string"
+    },
+    "matched_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "driver_action": {
+      "type": "string",
+      "description": "Last action taken by the matched driver on this request: accepted, declined, or negotiating"
+    },
+    "declined_driver_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Drivers who declined this request, excluded from re-matching"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "route_id",
+    "pickup_location",
+    "dropoff_location",
+    "payment_method"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

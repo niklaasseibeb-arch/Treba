@@ -1,0 +1,65 @@
+{
+  "name": "PayoutFeeConfig",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "commission_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Treba commission percentage applied to the agreed fare for digital bookings. Never hard-coded; set per config."
+    },
+    "cash_booking_fee_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Treba fee percentage applied to cash bookings (may differ from digital commission). Driver receives cash directly; Treba records the fee/settlement."
+    },
+    "fixed_fee_per_trip": {
+      "type": "number",
+      "default": 0,
+      "description": "Optional flat fee per completed trip, added to the percentage commission."
+    },
+    "min_fee": {
+      "type": "number",
+      "default": 0,
+      "description": "Minimum Treba fee per trip. The fee never exceeds the fare."
+    },
+    "currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "name": "SubscriptionPayment",
+  "type": "object",
+  "properties": {
+    "driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile"
+    },
+    "driver_user_id": {
+      "type": "string",
+      "description": "User id of the driver, for row-level access"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "invoice_id": {
+      "type": "string",
+      "description": "Reference to the SubscriptionInvoice this payment settles"
+    },
+    "subscription_id": {
+      "type": "string",
+      "description": "Reference to the DriverSubscription activated by this payment"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "plan_code": {
+      "type": "string"
+    },
+    "plan_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Subscription payment amount"
+    },
+    "currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_card",
+        "mobile_wallet",
+        "pay2cell",
+        "other_digital"
+      ],
+      "description": "Category of the payment method used. Cash is not accepted for subscriptions."
+    },
+    "provider_code": {
+      "type": "string",
+      "description": "Code of the configured PaymentProvider used"
+    },
+    "provider_name": {
+      "type": "string"
+    },
+    "provider_intent_id": {
+      "type": "string",
+      "description": "Provider-side intent/transaction id (e.g. a Stripe PaymentIntent id). Never stores PIN, password or OTP."
+    },
+    "payment_reference": {
+      "type": "string",
+      "description": "Treba transaction reference"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "successful",
+        "failed",
+        "cancelled",
+        "refunded"
+      ],
+      "default": "pending"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "renewal_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Subscription renewal date granted by this payment"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failure_reason": {
+      "type": "string"
+    },
+    "refunded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "refund_amount": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "driver_user_id",
+    "invoice_id",
+    "amount"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "name": "DriverNoShowReport",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string"
+    },
+    "trip_request_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "passenger_name": {
+      "type": "string"
+    },
+    "driver_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "allocation_id": {
+      "type": "string",
+      "description": "Scheduled service (Allocation) this no-show occurred on"
+    },
+    "route": {
+      "type": "string",
+      "description": "Origin \u2192 destination label"
+    },
+    "pickup_location": {
+      "type": "string",
+      "description": "Designated pickup point where the passenger waited"
+    },
+    "scheduled_departure": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "grace_minutes": {
+      "type": "number",
+      "default": 15
+    },
+    "reported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "passenger_at_pickup": {
+      "type": "boolean",
+      "default": false
+    },
+    "grace_elapsed": {
+      "type": "boolean",
+      "default": false
+    },
+    "contact_attempted": {
+      "type": "boolean",
+      "default": false
+    },
+    "contact_attempts_count": {
+      "type": "number",
+      "default": 0
+    },
+    "evidence_notes": {
+      "type": "string",
+      "description": "Free-text evidence supplied by the passenger (e.g. waited at rank, driver unreachable)"
+    },
+    "evidence_file_url": {
+      "type": "string",
+      "description": "Optional uploaded evidence file (photo of pickup point, etc.)"
+    },
+    "no_show_status": {
+      "type": "string",
+      "enum": [
+        "reported",
+        "under_review",
+        "upheld",
+        "overturned",
+        "resolved"
+      ],
+      "default": "reported"
+    },
+    "driver_response": {
+      "type": "string",
+      "description": "Optional response from the driver during the dispute window"
+    },
+    "review_decision": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "upheld",
+        "overturned"
+      ],
+      "default": "pending"
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "financial_outcome": {
+      "type": "string",
+      "description": "Description of the financial outcome applied per the passenger protection policy. Treba never auto-refunds."
+    },
+    "refund_amount": {
+      "type": "number",
+      "description": "Refund amount an admin may apply per policy. Never auto-processed."
+    }
+  },
+  "required": [
+    "booking_id",
+    "passenger_id",
+    "driver_user_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

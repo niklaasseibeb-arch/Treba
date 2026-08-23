@@ -1,0 +1,150 @@
+{
+  "name": "DriverSubscription",
+  "type": "object",
+  "properties": {
+    "driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile"
+    },
+    "driver_user_id": {
+      "type": "string",
+      "description": "User id of the driver, for row-level access"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "plan_id": {
+      "type": "string",
+      "description": "Reference to the DriverSubscriptionPlan"
+    },
+    "plan_code": {
+      "type": "string"
+    },
+    "plan_name": {
+      "type": "string"
+    },
+    "price": {
+      "type": "number",
+      "description": "Snapshot of plan price at subscription time"
+    },
+    "currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "trip_allowance": {
+      "type": "number",
+      "default": 0,
+      "description": "Snapshot of the plan trip allowance"
+    },
+    "is_unlimited": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_trial": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when this subscription is a 60-day free trial. A driver may only ever have one trial."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "trial",
+        "active",
+        "expiring",
+        "expired",
+        "suspended",
+        "cancelled"
+      ],
+      "default": "active"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "renewal_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Next renewal date (paid subscriptions)"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trial end date (free trials)"
+    },
+    "trips_used": {
+      "type": "number",
+      "default": 0,
+      "description": "Completed trips counted in this subscription period. For trials this is the number of trips completed during the trial."
+    },
+    "auto_renew": {
+      "type": "boolean",
+      "default": false
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reminders_sent": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": [],
+      "description": "Trial reminder thresholds (days remaining) already notified."
+    },
+    "payment_reference": {
+      "type": "string",
+      "description": "Reference for the subscription payment. Treba collects only driver subscription payments \u2014 never passenger fares."
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "driver_user_id",
+    "plan_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

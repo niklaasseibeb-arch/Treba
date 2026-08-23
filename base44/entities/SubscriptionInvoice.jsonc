@@ -1,0 +1,115 @@
+{
+  "name": "SubscriptionInvoice",
+  "type": "object",
+  "properties": {
+    "driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile"
+    },
+    "driver_user_id": {
+      "type": "string",
+      "description": "User id of the driver, for row-level access"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "subscription_id": {
+      "type": "string",
+      "description": "Reference to the DriverSubscription activated by this invoice"
+    },
+    "plan_id": {
+      "type": "string",
+      "description": "Reference to the DriverSubscriptionPlan"
+    },
+    "plan_code": {
+      "type": "string"
+    },
+    "plan_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Subscription amount due for the period"
+    },
+    "currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Subscription period start date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Subscription period end date (renewal date)"
+    },
+    "invoice_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "failed",
+        "cancelled",
+        "refunded"
+      ],
+      "default": "pending"
+    },
+    "payment_id": {
+      "type": "string",
+      "description": "Reference to the SubscriptionPayment that settled this invoice"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "driver_user_id",
+    "plan_id",
+    "amount"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

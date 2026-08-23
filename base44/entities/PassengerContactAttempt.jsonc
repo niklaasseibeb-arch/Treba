@@ -1,0 +1,86 @@
+{
+  "name": "PassengerContactAttempt",
+  "type": "object",
+  "properties": {
+    "driver_no_show_report_id": {
+      "type": "string"
+    },
+    "booking_id": {
+      "type": "string"
+    },
+    "trip_request_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "attempt_type": {
+      "type": "string",
+      "enum": [
+        "call",
+        "message"
+      ]
+    },
+    "attempted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "no_answer",
+        "reached",
+        "failed"
+      ]
+    },
+    "note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_request_id",
+    "attempt_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

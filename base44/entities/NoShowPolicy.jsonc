@@ -1,0 +1,66 @@
+{
+  "name": "NoShowPolicy",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "grace_minutes": {
+      "type": "number",
+      "default": 10,
+      "description": "Minutes after scheduled departure the driver must wait before reporting a no-show"
+    },
+    "dispute_window_hours": {
+      "type": "number",
+      "default": 48,
+      "description": "Hours after a no-show is reported during which a passenger may dispute"
+    },
+    "refund_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether any refund is permitted under this policy. Treba never auto-refunds."
+    },
+    "refund_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Admin-configured refund percentage. Never hard-coded; set per policy."
+    },
+    "charge_passenger": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, the passenger is charged/forfeits the fare under this no-show policy"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

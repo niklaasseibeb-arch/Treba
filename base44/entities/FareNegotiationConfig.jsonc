@@ -1,0 +1,55 @@
+{
+  "name": "FareNegotiationConfig",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "min_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Optional minimum permitted fare. An operational safeguard only \u2014 never presented to users as a Treba fare estimate."
+    },
+    "max_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Optional maximum permitted fare. An operational safeguard only \u2014 never presented to users as a Treba fare estimate."
+    },
+    "currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

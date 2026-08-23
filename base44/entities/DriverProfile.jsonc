@@ -1,0 +1,131 @@
+{
+  "name": "DriverProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Reference to the User this driver profile belongs to"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "license_number": {
+      "type": "string"
+    },
+    "license_expiry": {
+      "type": "string",
+      "format": "date"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "availability_status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "unavailable"
+      ],
+      "default": "available"
+    },
+    "rating": {
+      "type": "number",
+      "default": 0
+    },
+    "account_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "pending"
+      ],
+      "default": "pending"
+    },
+    "id_number": {
+      "type": "string",
+      "description": "National ID or verification document number"
+    },
+    "address": {
+      "type": "string"
+    },
+    "profile_photo_url": {
+      "type": "string"
+    },
+    "driving_experience_years": {
+      "type": "number",
+      "default": 0
+    },
+    "preferred_routes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Town-to-town routes the driver is willing to operate, e.g. 'Windhoek - Swakopmund'"
+    },
+    "vehicle_id": {
+      "type": "string",
+      "description": "Reference to the Driver's primary Vehicle"
+    },
+    "wallet_id": {
+      "type": "string",
+      "description": "Reference to the Driver's DriverWallet"
+    },
+    "is_activated_for_paid_bookings": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only once the driver has a verified payout method and admin approval"
+    }
+  },
+  "required": [
+    "full_name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

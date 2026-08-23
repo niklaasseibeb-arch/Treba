@@ -1,0 +1,134 @@
+{
+  "name": "BookingTransferRequest",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string",
+      "description": "Reference to the Booking being transferred"
+    },
+    "trip_request_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string",
+      "description": "User id of the passenger requesting the transfer, for row-level access"
+    },
+    "passenger_name": {
+      "type": "string"
+    },
+    "origin": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "departure_time": {
+      "type": "string",
+      "description": "Departure time of the passenger's current service"
+    },
+    "current_allocation_id": {
+      "type": "string"
+    },
+    "current_driver_id": {
+      "type": "string"
+    },
+    "current_driver_name": {
+      "type": "string"
+    },
+    "target_allocation_id": {
+      "type": "string",
+      "description": "Reference to the Allocation the passenger wants to transfer to"
+    },
+    "target_driver_id": {
+      "type": "string"
+    },
+    "target_driver_user_id": {
+      "type": "string",
+      "description": "User id of the receiving driver, for row-level access"
+    },
+    "target_driver_name": {
+      "type": "string"
+    },
+    "target_departure_time": {
+      "type": "string"
+    },
+    "target_vehicle_label": {
+      "type": "string"
+    },
+    "number_of_seats": {
+      "type": "number",
+      "default": 1
+    },
+    "fare_amount": {
+      "type": "number",
+      "description": "Snapshot of the agreed fare, preserved across the transfer. Never recalculated by Treba."
+    },
+    "transfer_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined",
+        "expired",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "responded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decline_reason": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "booking_id",
+    "passenger_id",
+    "target_allocation_id",
+    "target_driver_user_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "data.target_driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

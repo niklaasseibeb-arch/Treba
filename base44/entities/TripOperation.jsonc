@@ -1,0 +1,133 @@
+{
+  "name": "TripOperation",
+  "type": "object",
+  "properties": {
+    "allocation_id": {
+      "type": "string",
+      "description": "Reference to the scheduled Allocation this operation runs"
+    },
+    "driver_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "vehicle_id": {
+      "type": "string"
+    },
+    "vehicle_label": {
+      "type": "string"
+    },
+    "route": {
+      "type": "string",
+      "description": "Origin \u2192 destination label"
+    },
+    "origin": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "departure_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "departure_time": {
+      "type": "string"
+    },
+    "total_seats": {
+      "type": "number",
+      "default": 0
+    },
+    "manifest_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of confirmed passengers on the manifest"
+    },
+    "trip_status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "departed",
+        "completed",
+        "cancelled"
+      ],
+      "default": "scheduled"
+    },
+    "operational_checks": {
+      "type": "object",
+      "description": "Snapshot of mandatory operational conditions at last evaluation"
+    },
+    "admin_override": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, the driver may start the trip even if mandatory conditions are not met"
+    },
+    "override_by": {
+      "type": "string"
+    },
+    "override_reason": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancellation_reason": {
+      "type": "string"
+    },
+    "incident_notes": {
+      "type": "string",
+      "description": "Free-text incident notes recorded during the trip"
+    }
+  },
+  "required": [
+    "allocation_id",
+    "departure_date",
+    "departure_time"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
