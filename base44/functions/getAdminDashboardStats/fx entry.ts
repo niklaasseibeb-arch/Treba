@@ -1,163 +1,515 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import React, { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Users,
+  Car,
+  BadgeCheck,
+  Route as RouteIcon,
+  Inbox,
+  Ticket,
+  RefreshCw,
+  ArrowRight,
+  ShieldCheck,
+  UserCheck,
+} from "lucide-react";
 
-/**
- * Administrator Dashboard — aggregates live marketplace counts across the
- * demand-driven workflow: passenger demand, driver allocation, bookings,
- * fare negotiation, payments, driver wallets, and routes.
- *
- * Admin-only. Fare is never created or estimated here — this is read-only
- * visibility over the passenger/driver negotiation marketplace.
- */
-export default async function(req) {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+import { base44 } from "@/api/base44Client";
 
-    const admin = base44.asServiceRole;
-    const today = new Date().toISOString().slice(0, 10);
+function StatCard({
+  icon: Icon,
+  title,
+  value,
+  description,
+  to,
+}) {
+  const content = (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/40">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">
+            {title}
+          </p>
 
-    // --- Fetch all relevant records (best-effort, bounded) ---
-    const [requests, allocations, bookings, payments, wallets, routes, noShows, driverNoShows] = await Promise.all([
-      admin.entities.TripRequest.list('-created_date', 1000).catch(() => []),
-      admin.entities.Allocation.list('-created_date', 1000).catch(() => []),
-      admin.entities.Booking.list('-created_date', 1000).catch(() => []),
-      admin.entities.Payment.list('-created_date', 1000).catch(() => []),
-      admin.entities.DriverWallet.list('-created_date', 500).catch(() => []),
-      admin.entities.Route.list('-created_date', 500).catch(() => []),
-      admin.entities.NoShowReport.list('-reported_at', 500).catch(() => []),
-      admin.entities.DriverNoShowReport.list('-reported_at', 500).catch(() => []),
-    ]);
+          <p className="mt-2 text-3xl font-bold tracking-tight">
+            {value}
+          </p>
 
-    // --- PASSENGER DEMAND ---
-    const demand = {
-      new_requests: 0,
-      active_requests: 0,
-      matched_requests: 0,
-      unmatched_requests: 0,
-      completed_requests: 0,
-      cancelled_requests: 0,
-      no_shows: (noShows || []).length + (driverNoShows || []).length,
-    };
-    (requests || []).forEach((r) => {
-      const s = r.request_status;
-      if (s === 'requested' || s === 'pending') demand.new_requests += 1;
-      if (s === 'matched' || s === 'driver_accepted' || s === 'driver_responded') demand.active_requests += 1;
-      if (r.matched_allocation_id || r.matched_driver_id) demand.matched_requests += 1;
-      if (!r.matched_driver_id && s !== 'cancelled' && s !== 'booked') demand.unmatched_requests += 1;
-      if (s === 'booked') demand.completed_requests += 1;
-      if (s === 'cancelled') demand.cancelled_requests += 1;
-    });
+          {description && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {description}
+            </p>
+          )}
+        </div>
 
-    // --- DRIVER ALLOCATION ---
-    const allocation = {
-      daily_allocations: 0,
-      confirmed_availability: 0,
-      declined_allocations: 0,
-      unallocated_routes: 0,
-      replacement_drivers: 0,
-    };
-    const todaysAllocations = (allocations || []).filter((a) => String(a.date || '') === today);
-    allocation.daily_allocations = todaysAllocations.length;
-    (allocations || []).forEach((a) => {
-      if (a.status === 'confirmed') allocation.confirmed_availability += 1;
-      if (a.status === 'declined') allocation.declined_allocations += 1;
-      if (a.needs_replacement || a.replacement_driver_id) allocation.replacement_drivers += 1;
-    });
-    const activeRouteIds = new Set((routes || []).filter((r) => r.is_active && r.route_status !== 'suspended').map((r) => r.id));
-    const allocatedRouteIdsToday = new Set(todaysAllocations.map((a) => a.route_id).filter(Boolean));
-    allocation.unallocated_routes = [...activeRouteIds].filter((id) => !allocatedRouteIdsToday.has(id)).length;
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </div>
+  );
 
-    // --- BOOKINGS ---
-    const booking = {
-      pending: 0,
-      confirmed: 0,
-      paid: 0,
-      cash_pending: 0,
-      cash_overdue: 0,
-      completed: 0,
-      cancelled: 0,
-      no_show: 0,
-    };
-    (bookings || []).forEach((b) => {
-      const bs = b.booking_status;
-      const ps = b.payment_state;
-      if (bs === 'pending') booking.pending += 1;
-      if (bs === 'confirmed') booking.confirmed += 1;
-      if (ps === 'paid') booking.paid += 1;
-      if (ps === 'cash_pending') booking.cash_pending += 1;
-      if (ps === 'cash_overdue') booking.cash_overdue += 1;
-      if (bs === 'completed') booking.completed += 1;
-      if (bs === 'cancelled') booking.cancelled += 1;
-      if (b.was_no_show || b.no_show_status === 'passenger_no_show' || b.no_show_status === 'upheld') booking.no_show += 1;
-    });
-
-    // --- FARE NEGOTIATION ---
-    const fare = {
-      open_negotiations: 0,
-      agreed_fares: 0,
-      declined_negotiations: 0,
-      expired_negotiations: 0,
-    };
-    (requests || []).forEach((r) => {
-      const ns = r.negotiation_state;
-      if (ns === 'negotiation_open' || ns === 'offer_made' || ns === 'counter_offer') fare.open_negotiations += 1;
-      if (ns === 'fare_agreed' || ns === 'accepted') fare.agreed_fares += 1;
-      if (ns === 'declined') fare.declined_negotiations += 1;
-      if (ns === 'expired') fare.expired_negotiations += 1;
-    });
-
-    // --- PAYMENTS ---
-    const payment = {
-      bank_card: 0,
-      mobile_wallet: 0,
-      pay2cell: 0,
-      other_digital: 0,
-      cash_to_driver: 0,
-    };
-    (payments || []).forEach((p) => {
-      const m = p.payment_method;
-      if (m === 'bank_card') payment.bank_card += 1;
-      else if (m === 'mobile_wallet') payment.mobile_wallet += 1;
-      else if (m === 'pay2cell') payment.pay2cell += 1;
-      else if (m === 'other_digital') payment.other_digital += 1;
-      else if (m === 'cash_to_driver') payment.cash_to_driver += 1;
-    });
-
-    // --- DRIVER WALLET ---
-    const wallet = {
-      earnings: 0,
-      pending_payouts: 0,
-      completed_payouts: 0,
-      failed_payouts: 0,
-    };
-    (wallets || []).forEach((w) => {
-      wallet.earnings += Number(w.available_earnings || 0) + Number(w.pending_earnings || 0);
-      wallet.pending_payouts += Number(w.pending_payout_total || 0);
-      wallet.completed_payouts += Number(w.completed_payouts_total || 0);
-      wallet.failed_payouts += Number(w.failed_payout_total || 0);
-    });
-
-    // --- ROUTES ---
-    const route = {
-      active_routes: (routes || []).filter((r) => r.is_active && r.route_status !== 'suspended').length,
-      standard_pickup_points: (routes || []).reduce((sum, r) => sum + ((r.standard_pickup_points || []).length), 0),
-      standard_drop_off_points: (routes || []).reduce((sum, r) => sum + ((r.standard_drop_off_points || []).length), 0),
-      scheduled_services: (allocations || []).length,
-    };
-
-    return Response.json({
-      generated_at: new Date().toISOString(),
-      demand,
-      allocation,
-      booking,
-      fare,
-      payment,
-      wallet,
-      route,
-    });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+  if (!to) {
+    return content;
   }
+
+  return (
+    <Link to={to} className="block">
+      {content}
+    </Link>
+  );
+}
+
+export default function AdminDashboard() {
+  const [stats, setStats] = useState({
+    users: 0,
+    drivers: 0,
+    pendingDrivers: 0,
+    approvedDrivers: 0,
+    vehicles: 0,
+    pendingVehicles: 0,
+    routes: 0,
+    tripRequests: 0,
+    bookings: 0,
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      /*
+       * -------------------------------------------------------
+       * DRIVER PROFILES
+       * -------------------------------------------------------
+       */
+
+      let drivers = [];
+
+      try {
+        drivers =
+          (await base44.entities.DriverProfile.list(
+            "-created_date",
+            500
+          )) || [];
+      } catch (err) {
+        console.error(
+          "Could not load DriverProfile:",
+          err
+        );
+      }
+
+      /*
+       * -------------------------------------------------------
+       * VEHICLES
+       * -------------------------------------------------------
+       */
+
+      let vehicles = [];
+
+      try {
+        vehicles =
+          (await base44.entities.Vehicle.list(
+            "-created_date",
+            500
+          )) || [];
+      } catch (err) {
+        console.error(
+          "Could not load Vehicle:",
+          err
+        );
+      }
+
+      /*
+       * -------------------------------------------------------
+       * ROUTES
+       * -------------------------------------------------------
+       */
+
+      let routes = [];
+
+      try {
+        routes =
+          (await base44.entities.Route.list(
+            "-created_date",
+            500
+          )) || [];
+      } catch (err) {
+        console.error(
+          "Could not load Route:",
+          err
+        );
+      }
+
+      /*
+       * -------------------------------------------------------
+       * TRIP REQUESTS
+       * -------------------------------------------------------
+       */
+
+      let tripRequests = [];
+
+      try {
+        tripRequests =
+          (await base44.entities.TripRequest.list(
+            "-created_date",
+            500
+          )) || [];
+      } catch (err) {
+        console.error(
+          "Could not load TripRequest:",
+          err
+        );
+      }
+
+      /*
+       * -------------------------------------------------------
+       * BOOKINGS
+       * -------------------------------------------------------
+       */
+
+      let bookings = [];
+
+      try {
+        bookings =
+          (await base44.entities.Booking.list(
+            "-created_date",
+            500
+          )) || [];
+      } catch (err) {
+        console.error(
+          "Could not load Booking:",
+          err
+        );
+      }
+
+      /*
+       * -------------------------------------------------------
+       * DRIVER COUNTS
+       * -------------------------------------------------------
+       */
+
+      const pendingDrivers =
+        drivers.filter(
+          (driver) =>
+            driver.verification_status !==
+            "approved"
+        ).length;
+
+      const approvedDrivers =
+        drivers.filter(
+          (driver) =>
+            driver.verification_status ===
+            "approved"
+        ).length;
+
+      /*
+       * -------------------------------------------------------
+       * VEHICLE COUNTS
+       * -------------------------------------------------------
+       */
+
+      const pendingVehicles =
+        vehicles.filter(
+          (vehicle) =>
+            vehicle.verification_status !==
+            "approved"
+        ).length;
+
+      /*
+       * -------------------------------------------------------
+       * UPDATE DASHBOARD
+       * -------------------------------------------------------
+       *
+       * Base44 does not expose a normal browser-side
+       * users.list() method in SDK 0.8.43.
+       *
+       * Therefore users is currently represented by
+       * known Treba profile records rather than attempting
+       * to access the internal Base44 User table.
+       */
+
+      setStats({
+        users: drivers.length,
+        drivers: drivers.length,
+        pendingDrivers,
+        approvedDrivers,
+        vehicles: vehicles.length,
+        pendingVehicles,
+        routes: routes.length,
+        tripRequests: tripRequests.length,
+        bookings: bookings.length,
+      });
+    } catch (err) {
+      console.error(
+        "TREBA ADMIN DASHBOARD FAILED:",
+        err
+      );
+
+      setError(
+        err?.message ||
+          "Unable to load Admin dashboard."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  return (
+    <div className="space-y-6">
+      {/* --------------------------------------------------- */}
+      {/* HEADER */}
+      {/* --------------------------------------------------- */}
+
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Admin Dashboard
+          </h1>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage Treba users, drivers, vehicles,
+            routes and marketplace operations.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={loadDashboard}
+          disabled={loading}
+          className="inline-flex items-center gap-2 rounded-md border border-input bg-card px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent disabled:opacity-50"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${
+              loading ? "animate-spin" : ""
+            }`}
+          />
+
+          Refresh
+        </button>
+      </div>
+
+      {/* --------------------------------------------------- */}
+      {/* ERROR */}
+      {/* --------------------------------------------------- */}
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {/* --------------------------------------------------- */}
+      {/* CORE ADMIN STATS */}
+      {/* --------------------------------------------------- */}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={Users}
+          title="Users"
+          value={
+            loading
+              ? "..."
+              : stats.users
+          }
+          description="Registered Treba profiles"
+          to="/app/admin/users"
+        />
+
+        <StatCard
+          icon={Car}
+          title="Drivers"
+          value={
+            loading
+              ? "..."
+              : stats.drivers
+          }
+          description={`${stats.approvedDrivers} approved`}
+          to="/app/admin/drivers"
+        />
+
+        <StatCard
+          icon={BadgeCheck}
+          title="Pending Driver Approval"
+          value={
+            loading
+              ? "..."
+              : stats.pendingDrivers
+          }
+          description="Drivers requiring review"
+          to="/app/admin/verifications"
+        />
+
+        <StatCard
+          icon={UserCheck}
+          title="Approved Drivers"
+          value={
+            loading
+              ? "..."
+              : stats.approvedDrivers
+          }
+          description="Verified driver profiles"
+          to="/app/admin/verifications"
+        />
+      </div>
+
+      {/* --------------------------------------------------- */}
+      {/* OPERATIONS */}
+      {/* --------------------------------------------------- */}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={Car}
+          title="Vehicles"
+          value={
+            loading
+              ? "..."
+              : stats.vehicles
+          }
+          description={`${stats.pendingVehicles} pending verification`}
+          to="/app/admin/vehicles"
+        />
+
+        <StatCard
+          icon={RouteIcon}
+          title="Routes"
+          value={
+            loading
+              ? "..."
+              : stats.routes
+          }
+          description="Configured routes"
+          to="/app/admin/routes"
+        />
+
+        <StatCard
+          icon={Inbox}
+          title="Trip Requests"
+          value={
+            loading
+              ? "..."
+              : stats.tripRequests
+          }
+          description="Passenger demand"
+          to="/app/admin/requests"
+        />
+
+        <StatCard
+          icon={Ticket}
+          title="Bookings"
+          value={
+            loading
+              ? "..."
+              : stats.bookings
+          }
+          description="Passenger bookings"
+          to="/app/admin/bookings"
+        />
+      </div>
+
+      {/* --------------------------------------------------- */}
+      {/* ADMIN ACTIONS */}
+      {/* --------------------------------------------------- */}
+
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5 text-primary" />
+
+          <div>
+            <h2 className="text-base font-semibold">
+              Administration
+            </h2>
+
+            <p className="text-sm text-muted-foreground">
+              Access the main administration functions.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Link
+            to="/app/admin/users"
+            className="group rounded-xl border border-border p-4 hover:border-primary hover:bg-primary/5"
+          >
+            <div className="flex items-center justify-between">
+              <Users className="h-5 w-5 text-primary" />
+
+              <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+            </div>
+
+            <div className="mt-3 font-semibold">
+              Users
+            </div>
+
+            <div className="mt-1 text-xs text-muted-foreground">
+              View registered passenger and driver profiles.
+            </div>
+          </Link>
+
+          <Link
+            to="/app/admin/drivers"
+            className="group rounded-xl border border-border p-4 hover:border-primary hover:bg-primary/5"
+          >
+            <div className="flex items-center justify-between">
+              <Car className="h-5 w-5 text-primary" />
+
+              <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+            </div>
+
+            <div className="mt-3 font-semibold">
+              Drivers
+            </div>
+
+            <div className="mt-1 text-xs text-muted-foreground">
+              View and manage driver profiles.
+            </div>
+          </Link>
+
+          <Link
+            to="/app/admin/verifications"
+            className="group rounded-xl border border-border p-4 hover:border-primary hover:bg-primary/5"
+          >
+            <div className="flex items-center justify-between">
+              <BadgeCheck className="h-5 w-5 text-primary" />
+
+              <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+            </div>
+
+            <div className="mt-3 font-semibold">
+              Driver Verification
+            </div>
+
+            <div className="mt-1 text-xs text-muted-foreground">
+              Approve or reject driver registrations.
+            </div>
+          </Link>
+
+          <Link
+            to="/app/admin/routes"
+            className="group rounded-xl border border-border p-4 hover:border-primary hover:bg-primary/5"
+          >
+            <div className="flex items-center justify-between">
+              <RouteIcon className="h-5 w-5 text-primary" />
+
+              <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+            </div>
+
+            <div className="mt-3 font-semibold">
+              Routes
+            </div>
+
+            <div className="mt-1 text-xs text-muted-foreground">
+              Manage Treba travel corridors and routes.
+            </div>
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
 }

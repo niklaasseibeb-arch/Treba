@@ -1,141 +1,381 @@
-/**
- * Treba Passenger Demand Matching Engine — pure matching & ranking logic.
- *
- * Matches a passenger TripRequest to SCHEDULED, CONFIRMED daily allocations
- * (drivers who have confirmed availability for a route on a date) and ranks
- * the suitable scheduled drivers best-first according to Treba's priority:
- *
- *   1. Confirmed daily allocation      (hard filter — only confirmed allocations)
- *   2. Driver availability              (hard filter — active, approved, available)
- *   3. Appropriate route                (hard filter — origin/destination/route/date)
- *   4. Appropriate departure time       (rank by closeness to preferred time)
- *   5. Available passenger capacity     (hard filter + rank by headroom)
- *   6. Luggage capacity                 (hard filter + rank by headroom)
- *   7. Fair allocation                  (rank by fewer total allocations)
- *   8. Driver workload / fatigue        (rank by fewer same-day allocations)
- *
- * It does NOT determine, estimate or rank by fare. Fare is always negotiated
- * between the passenger and the matched driver.
- */
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { rankEligibleDrivers } from "../../shared/allocationEngine.ts";
+import { getActiveMarketplaceDriverUserIds } from "../../shared/driverSubscription.ts";
+import {
+  sendNotification,
+  NOTIFICATION_EVENTS
+} from "../../shared/notifications.ts";
 
-import { luggageEquivalent } from './luggageServer.ts';
+export default async function (req) {
+  try {
+    const base44 =
+      createClientFromRequest(req);
 
-// Maximum acceptable difference between the passenger's preferred departure
-// time and the scheduled allocation's departure time, in minutes.
-export const TIME_WINDOW_MINUTES = 180;
+    const user =
+      await base44.auth.me();
 
-function toMinutes(t) {
-  if (!t) return null;
-  const parts = String(t).split(':').map(Number);
-  if (parts.some(isNaN)) return null;
-  return parts[0] * 60 + (parts[1] || 0);
-}
-
-/**
- * Rank suitable scheduled allocations for a passenger trip request, best-first.
- *
- * @returns Array<{ allocation, driver, vehicle, score, minutesDiff, seatHeadroom, luggageHeadroom, dayAllocations, totalAllocations }>
- */
-export function rankMatchingAllocations({
-  request,
-  allocations,
-  driversById,
-  vehiclesById,
-  excludeDriverIds = [],
-}) {
-  const seats = Number(request.number_of_seats) || 1;
-  const luggageEq = luggageEquivalent(request);
-  const reqMin = toMinutes(request.requested_time);
-  const excluded = new Set(excludeDriverIds);
-  const candidates = [];
-
-  for (const a of allocations) {
-    // 3. Appropriate route: origin / destination / date / route match
-    if (!a.origin || !a.destination) continue;
-    if (a.origin !== request.origin || a.destination !== request.destination) continue;
-    if (request.requested_date && a.date && a.date !== request.requested_date) continue;
-    if (request.route_id && a.route_id && request.route_id !== a.route_id) continue;
-
-    // 1. Confirmed daily allocation (driver availability confirmation)
-    if (a.status !== 'confirmed') continue;
-
-    // 2. Driver availability & operational status
-    const driver = a.allocated_driver_id ? driversById.get(a.allocated_driver_id) : null;
-    if (!driver) continue;
-    if (excluded.has(driver.id)) continue;
-    if (driver.account_status && driver.account_status !== 'active') continue;
-    if (driver.verification_status && driver.verification_status !== 'approved') continue;
-    if (driver.availability_status && driver.availability_status !== 'available') continue;
-
-    // Vehicle
-    const vehicle = a.vehicle_id ? vehiclesById.get(a.vehicle_id) : null;
-    if (!vehicle) continue;
-    if (vehicle.verification_status && vehicle.verification_status !== 'approved') continue;
-
-    // 5. Available passenger capacity
-    const allocSeats = Number(a.available_seats ?? a.total_seats ?? vehicle.seating_capacity ?? 0);
-    if (allocSeats < seats) continue;
-    if (vehicle.seating_capacity && Number(vehicle.seating_capacity) < seats) continue;
-
-    // 6. Luggage capacity (enforced only when the vehicle has a configured capacity)
-    if (typeof vehicle.luggage_capacity === 'number' && luggageEq > vehicle.luggage_capacity) continue;
-
-    // 4. Appropriate departure time (closeness, within window)
-    const aMin = toMinutes(a.departure_time);
-    let minutesDiff = 0;
-    if (reqMin != null && aMin != null) {
-      minutesDiff = Math.abs(aMin - reqMin);
-      if (minutesDiff > TIME_WINDOW_MINUTES) continue;
+    if (!user) {
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    // 7. Fair allocation & 8. workload / fatigue stats
-    const dayAllocations = allocations.filter(
-      (x) =>
-        x.allocated_driver_id === driver.id &&
-        x.date === a.date &&
-        (x.status === 'confirmed' || x.status === 'awaiting_confirmation')
-    ).length;
-    const totalAllocations = allocations.filter(
-      (x) => x.allocated_driver_id === driver.id
-    ).length;
+    if (user.role !== "admin") {
+      return Response.json(
+        { error: "Admin only" },
+        { status: 403 }
+      );
+    }
 
-    const seatHeadroom = allocSeats - seats;
-    const luggageHeadroom =
-      typeof vehicle.luggage_capacity === 'number'
-        ? vehicle.luggage_capacity - luggageEq
-        : 0;
+    const body =
+      await req.json().catch(
+        () => ({})
+      );
 
-    // Weighted score (lower = better), following the priority order.
-    const score =
-      minutesDiff * 1 +        // 4. departure time closeness
-      dayAllocations * 60 +    // 8. workload / fatigue
-      totalAllocations * 30 +  // 7. fair allocation
-      -seatHeadroom * 2 +      // 5. passenger capacity headroom
-      -luggageHeadroom * 3;    // 6. luggage capacity headroom
+    const {
+      route_id,
+      date,
+      departure_time,
+      timeslot
+    } = body || {};
 
-    candidates.push({
-      allocation: a,
-      driver,
-      vehicle,
-      score,
-      minutesDiff,
-      seatHeadroom,
-      luggageHeadroom,
-      dayAllocations,
-      totalAllocations,
-    });
+    if (
+      !route_id ||
+      !date ||
+      !departure_time
+    ) {
+      return Response.json(
+        {
+          error:
+            "route_id, date and departure_time are required"
+        },
+        { status: 400 }
+      );
+    }
+
+    const admin =
+      base44.asServiceRole;
+
+    /*
+     * Load route.
+     */
+    const route =
+      await admin.entities.Route.get(
+        route_id
+      );
+
+    if (!route) {
+      return Response.json(
+        { error: "Route not found" },
+        { status: 404 }
+      );
+    }
+
+    if (
+      route.is_active === false ||
+      route.route_status !== "active"
+    ) {
+      return Response.json(
+        { error: "Route is not active" },
+        { status: 400 }
+      );
+    }
+
+    /*
+     * Load drivers, vehicles and
+     * existing allocations.
+     */
+    const [
+      drivers,
+      vehicles,
+      existingAllocations
+    ] = await Promise.all([
+      admin.entities.DriverProfile.list(
+        "-created_date",
+        500
+      ),
+
+      admin.entities.Vehicle.list(
+        "-created_date",
+        500
+      ),
+
+      admin.entities.Allocation.list(
+        "-date",
+        1000
+      )
+    ]);
+
+    /*
+     * Index vehicles by driver.
+     */
+    const vehiclesByDriver: Record<
+      string,
+      any
+    > = {};
+
+    for (const vehicle of vehicles) {
+      if (
+        vehicle.driver_id &&
+        vehicle.active !== false
+      ) {
+        /*
+         * Keep the first active vehicle.
+         */
+        if (
+          !vehiclesByDriver[
+            vehicle.driver_id
+          ]
+        ) {
+          vehiclesByDriver[
+            vehicle.driver_id
+          ] = vehicle;
+        }
+      }
+    }
+
+    /*
+     * Find eligible drivers.
+     */
+    const ranked =
+      rankEligibleDrivers({
+        route,
+        date,
+        departureTime:
+          departure_time,
+        drivers,
+        vehiclesByDriver,
+        existingAllocations,
+        excludeDriverIds: []
+      });
+
+    if (!ranked.length) {
+      return Response.json(
+        {
+          error:
+            "No eligible driver available for this route and time",
+          status:
+            "no_eligible_driver"
+        },
+        { status: 409 }
+      );
+    }
+
+    /*
+     * Only drivers with active marketplace
+     * access may receive allocations.
+     */
+    const accessUserIds =
+      await getActiveMarketplaceDriverUserIds(
+        admin
+      );
+
+    const accessibleRanked =
+      ranked.filter(
+        (candidate) =>
+          candidate.driver?.user_id &&
+          accessUserIds.has(
+            candidate.driver.user_id
+          )
+      );
+
+    if (!accessibleRanked.length) {
+      return Response.json(
+        {
+          error:
+            "No eligible driver with active marketplace access",
+          status:
+            "no_eligible_driver"
+        },
+        { status: 409 }
+      );
+    }
+
+    const best =
+      accessibleRanked[0];
+
+    const driver =
+      best.driver;
+
+    const vehicle =
+      best.vehicle;
+
+    const totalSeats =
+      Number(
+        vehicle.seating_capacity || 0
+      );
+
+    /*
+     * Create the scheduled allocation.
+     */
+    const allocation =
+      await admin.entities.Allocation.create(
+        {
+          route_id:
+            route.id,
+
+          route_code:
+            route.route_code || "",
+
+          origin:
+            route.origin_town,
+
+          destination:
+            route.destination_town,
+
+          date,
+
+          departure_time,
+
+          timeslot:
+            timeslot || "",
+
+          driver_id:
+            driver.id,
+
+          driver_name:
+            driver.full_name || "",
+
+          driver_user_id:
+            driver.user_id || "",
+
+          vehicle_id:
+            vehicle.id,
+
+          vehicle_label:
+            `${vehicle.make || ""} ${vehicle.model || ""} (${vehicle.registration_number || ""})`.trim(),
+
+          total_seats:
+            totalSeats,
+
+          booked_seats: 0,
+
+          available_seats:
+            totalSeats,
+
+          status:
+            "awaiting_confirmation",
+
+          queue_position: 1,
+
+          is_visible_to_passengers:
+            false,
+
+          passenger_booking_open:
+            false,
+
+          pickup_location: "",
+
+          dropoff_location: "",
+
+          driver_fare: 0,
+
+          pickup_charge: 0,
+
+          dropoff_charge: 0,
+
+          luggage_charge: 0,
+
+          total_fare: 0,
+
+          fare_status:
+            "pending",
+
+          payment_method:
+            "direct_to_driver",
+
+          payment_status:
+            "not_due",
+
+          declined_driver_ids: [],
+
+          created_at:
+            new Date().toISOString(),
+
+          updated_at:
+            new Date().toISOString()
+        }
+      );
+
+    /*
+     * Notify driver.
+     */
+    try {
+      await sendNotification(
+        admin,
+        {
+          user_id:
+            driver.user_id,
+
+          event_type:
+            NOTIFICATION_EVENTS
+              .ALLOCATION_CONFIRMATION_REQUIRED,
+
+          title:
+            "New trip allocation",
+
+          message:
+            `You have been allocated ${route.origin_town} → ${route.destination_town} on ${date} at ${departure_time}. Please confirm or decline your availability.`,
+
+          related_id:
+            allocation.id
+        }
+      );
+    } catch (notificationError) {
+      console.error(
+        "Allocation notification failed:",
+        notificationError
+      );
+    }
+
+    return Response.json(
+      {
+        success: true,
+        allocation,
+        candidates:
+          accessibleRanked
+            .slice(0, 5)
+            .map(
+              (candidate) => ({
+                driver_id:
+                  candidate.driver.id,
+
+                driver_name:
+                  candidate.driver.full_name,
+
+                vehicle_id:
+                  candidate.vehicle.id,
+
+                vehicle_label:
+                  `${candidate.vehicle.make || ""} ${candidate.vehicle.model || ""}`.trim(),
+
+                score:
+                  candidate.score,
+
+                day_allocations:
+                  candidate.dayAllocations,
+
+                total_allocations:
+                  candidate.totalAllocations
+              })
+            )
+      }
+    );
+  } catch (error) {
+    console.error(
+      "createAllocation error:",
+      error
+    );
+
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to create allocation"
+      },
+      { status: 500 }
+    );
   }
-
-  candidates.sort(
-    (a, b) =>
-      a.score - b.score ||
-      String(a.driver.created_date || '').localeCompare(String(b.driver.created_date || '')) ||
-      (a.driver.id || '').localeCompare(b.driver.id || '')
-  );
-  return candidates;
-}
-
-export function pickBestMatch(params) {
-  const ranked = rankMatchingAllocations(params);
-  return ranked[0] || null;
 }

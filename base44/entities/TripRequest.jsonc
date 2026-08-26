@@ -1,232 +1,224 @@
 {
   "name": "TripRequest",
   "type": "object",
+
   "properties": {
     "passenger_id": {
-      "type": "string",
-      "description": "Reference to the PassengerProfile making the request"
+      "type": "string"
     },
+
     "passenger_name": {
       "type": "string"
     },
+
     "route_id": {
-      "type": "string",
-      "description": "Reference to the Route the request is against"
+      "type": "string"
     },
+
     "origin": {
-      "type": "string"
+      "type": "string",
+      "description": "Origin town"
     },
+
     "destination": {
-      "type": "string"
+      "type": "string",
+      "description": "Destination town"
     },
+
     "pickup_location": {
-      "type": "string"
+      "type": "string",
+      "description": "Physical pickup location within the origin town"
     },
+
     "dropoff_location": {
-      "type": "string"
+      "type": "string",
+      "description": "Physical drop-off location within the destination town"
     },
+
     "pickup_is_standard": {
       "type": "boolean",
-      "default": true
+      "default": false
     },
+
     "dropoff_is_standard": {
       "type": "boolean",
-      "default": true
+      "default": false
     },
+
+    "requested_date": {
+      "type": "string"
+    },
+
+    "requested_time": {
+      "type": "string"
+    },
+
+    "time_window_minutes": {
+      "type": "number",
+      "default": 60
+    },
+
+    "booking_advance_days": {
+      "type": "number",
+      "default": 0
+    },
+
     "number_of_seats": {
       "type": "number",
       "default": 1
     },
+
     "luggage_small_bags": {
       "type": "number",
-      "default": 0,
-      "description": "Number of small personal bags"
+      "default": 0
     },
+
     "luggage_standard_bags": {
       "type": "number",
-      "default": 0,
-      "description": "Number of standard bags"
+      "default": 0
     },
+
     "luggage_large_suitcases": {
       "type": "number",
-      "default": 0,
-      "description": "Number of large suitcases"
+      "default": 0
     },
+
     "luggage_oversized_items": {
       "type": "number",
-      "default": 0,
-      "description": "Number of oversized or bulky items"
+      "default": 0
     },
+
     "luggage_weight_category": {
+      "type": "string"
+    },
+
+    "luggage_details": {
+      "type": "string"
+    },
+
+    "notes": {
+      "type": "string"
+    },
+
+    "request_type": {
       "type": "string",
       "enum": [
-        "small_personal",
-        "standard",
-        "large",
-        "oversized",
-        "heavy"
+        "single",
+        "group",
+        "proxy",
+        "recurring"
       ],
-      "description": "Approximate overall weight/size category"
+      "default": "single"
     },
-    "luggage_details": {
-      "type": "string",
-      "description": "Additional free-text luggage description"
+
+    "booking_for_someone_else": {
+      "type": "boolean",
+      "default": false
     },
+
+    "proxy_passenger_name": {
+      "type": "string"
+    },
+
+    "proxy_passenger_phone": {
+      "type": "string"
+    },
+
+    "group_name": {
+      "type": "string"
+    },
+
+    "group_size": {
+      "type": "number",
+      "default": 1
+    },
+
+    "recurring_booking_id": {
+      "type": "string"
+    },
+
     "payment_method": {
       "type": "string",
       "enum": [
-        "cash",
-        "digital"
-      ]
+        "direct_to_driver"
+      ],
+      "default": "direct_to_driver"
     },
-    "requested_date": {
-      "type": "string",
-      "format": "date"
-    },
-    "requested_time": {
-      "type": "string"
-    },
+
     "request_status": {
       "type": "string",
       "enum": [
         "requested",
-        "pending",
+        "matching",
         "matched",
-        "driver_accepted",
-        "driver_responded",
+        "offers_sent",
+        "driver_selected",
+        "scheduled",
         "booked",
-        "cancelled"
-      ],
-      "default": "pending"
-    },
-    "negotiation_state": {
-      "type": "string",
-      "enum": [
-        "not_started",
-        "negotiation_open",
-        "offer_made",
-        "counter_offer",
-        "accepted",
-        "declined",
-        "expired",
+        "completed",
         "cancelled",
-        "fare_agreed"
+        "expired",
+        "no_driver"
       ],
-      "default": "not_started",
-      "description": "Current state of the fare negotiation engine"
+      "default": "requested"
     },
-    "negotiated_fare": {
-      "type": "number",
-      "description": "Fare agreed between passenger and driver during negotiation. Never calculated or estimated by Treba."
+
+    "matching_started_at": {
+      "type": "string"
     },
-    "agreed_fare": {
-      "type": "number",
-      "description": "The locked, mutually-agreed fare. Set only when both parties accept the same amount."
+
+    "matching_completed_at": {
+      "type": "string"
     },
-    "agreed_fare_currency": {
-      "type": "string",
-      "default": "NAD"
+
+    "matched_at": {
+      "type": "string"
     },
-    "agreed_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "booking_id": {
-      "type": "string",
-      "description": "Reference to the Booking created when the fare was agreed"
-    },
-    "payment_status": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "paid",
-        "failed"
-      ],
-      "default": "pending",
-      "description": "Payment status for the agreed fare"
-    },
+
     "matched_allocation_id": {
-      "type": "string",
-      "description": "Reference to the Allocation the demand matching engine assigned this request to"
+      "type": "string"
     },
+
     "matched_driver_id": {
-      "type": "string",
-      "description": "Reference to the DriverProfile the request was sent to"
+      "type": "string"
     },
+
     "matched_driver_name": {
       "type": "string"
     },
+
     "matched_driver_user_id": {
-      "type": "string",
-      "description": "User id of the matched driver, used for directed routing and driver-side access"
+      "type": "string"
     },
+
     "matched_vehicle_id": {
       "type": "string"
     },
-    "matched_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "driver_action": {
-      "type": "string",
-      "description": "Last action taken by the matched driver on this request: accepted, declined, or negotiating"
-    },
+
     "declined_driver_ids": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Drivers who declined this request, excluded from re-matching"
+      "default": []
     },
-    "notes": {
+
+    "allocation_id": {
+      "type": "string"
+    },
+
+    "booking_id": {
       "type": "string"
     }
   },
+
   "required": [
-    "route_id",
-    "pickup_location",
-    "dropoff_location",
-    "payment_method"
-  ],
-  "rls": {
-    "read": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+    "passenger_id",
+    "origin",
+    "destination",
+    "requested_date",
+    "requested_time",
+    "number_of_seats",
+    "request_status"
+  ]
 }

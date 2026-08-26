@@ -63,15 +63,15 @@ export default function DriverTripRequests() {
 
   useEffect(() => { load(); }, []);
 
-  const respondToRequest = async (request, action) => {
-    setBusyId(request.id);
+  const respondToRequest = async (offer, action) => {
+    setBusyId(offer.id);
     try {
-      const res = await base44.functions.invoke("respondToTripRequest", { request_id: request.id, action });
+      const res = await base44.functions.invoke("respondToTripOffers", { offer_id: offer.id, action: "available" });
       if (res.data?.error) {
         toast({ title: res.data.error, variant: "destructive" });
         return;
       }
-      toast({ title: action === "accept" ? "Request accepted — negotiate the fare" : "Request declined" });
+      toast({ title: action === "available" ? "Trip confirmed — scheduled" : "Unavailable" });
       load();
     } catch (err) {
       toast({ title: "Could not respond", description: err.message, variant: "destructive" });
@@ -80,24 +80,7 @@ export default function DriverTripRequests() {
     }
   };
 
-  const confirmCash = async (requestId) => {
-    setBusyId(requestId);
-    try {
-      const res = await base44.functions.invoke("confirmCashCollection", { trip_request_id: requestId });
-      if (res.data?.error) {
-        toast({ title: res.data.error, variant: "destructive" });
-        return;
-      }
-      toast({ title: "Cash payment confirmed — booking paid" });
-      load();
-    } catch (err) {
-      toast({ title: "Could not confirm", description: err.message, variant: "destructive" });
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const confirmFareReceived = async (bookingId) => {
+    const confirmFareReceived = async (bookingId) => {
     setBusyId(bookingId);
     try {
       const res = await base44.functions.invoke("confirmFareReceived", { booking_id: bookingId });
@@ -121,7 +104,7 @@ export default function DriverTripRequests() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Trip Requests</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Trip Offer</h1>
         <p className="mt-1 text-muted-foreground">Passenger requests Treba has matched to your scheduled routes. Accept the trip to open fare negotiation — you are not accepting a fixed fare.</p>
       </div>
 

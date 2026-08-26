@@ -4,38 +4,51 @@
   "properties": {
     "role": {
       "type": "string",
-      "description": "The role of the user in the app",
+      "description": "Base44 system role",
       "enum": [
         "admin",
         "user"
-      ]
+      ],
+      "default": "user"
     },
+
     "app_role": {
       "type": "string",
-      "description": "Treba marketplace role chosen at registration",
+      "description": "Treba application role",
       "enum": [
         "passenger",
         "driver"
       ]
     },
+
+    "full_name": {
+      "type": "string",
+      "description": "User's full name"
+    },
+
     "phone": {
       "type": "string",
-      "description": "Contact phone number"
+      "description": "User's mobile phone number"
     },
+
     "account_status": {
       "type": "string",
+      "description": "Treba account status",
       "enum": [
         "active",
-        "suspended",
-        "pending"
+        "pending",
+        "suspended"
       ],
       "default": "active"
     },
+
     "profile_completion": {
       "type": "boolean",
+      "description": "Whether the user's Treba profile has been completed",
       "default": false
     }
   },
+
   "required": [
     "role"
   ]

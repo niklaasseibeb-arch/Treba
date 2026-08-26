@@ -1,72 +1,94 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { sendNotification, NOTIFICATION_EVENTS } from '../../shared/notifications.ts';
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.6";
 
-/**
- * Direct Passenger-to-Driver Payment — the driver optionally confirms that the
- * passenger paid the agreed fare directly to them.
- *
- * This is an OPERATIONAL RECORD ONLY. Treba does NOT collect, process, hold,
- * transfer or refund the fare, and does NOT charge commission. This function
- * only marks `fare_received` on the booking so Treba has a record that the
- * direct payment took place between passenger and driver.
- */
-export default async function(req) {
+Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const body = await req.json().catch(() => ({}));
-    const { booking_id } = body || {};
-    if (!booking_id) return Response.json({ error: 'booking_id is required' }, { status: 400 });
-
-    const admin = base44.asServiceRole;
-    const booking = await admin.entities.Booking.get(booking_id);
-    if (!booking) return Response.json({ error: 'Booking not found' }, { status: 404 });
-
-    // Authorise: the allocated driver for this booking, or an admin.
-    let trip = null;
-    if (booking.trip_request_id) {
-      try { trip = await admin.entities.TripRequest.get(booking.trip_request_id); } catch (e) {}
-    }
-    if (trip && trip.matched_driver_user_id !== user.id && user.role !== 'admin') {
-      return Response.json({ error: 'Only the allocated driver can confirm fare received' }, { status: 403 });
-    }
-    if (booking.fare_received) {
-      return Response.json({ error: 'Fare already marked as received' }, { status: 400 });
+    if (!user) {
+      return Response.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
 
-    const now = new Date().toISOString();
-    await admin.entities.Booking.update(booking_id, {
-      fare_received: true,
-      fare_received_at: now,
-    });
+    const { booking_id } = await req.json();
 
-    try {
-      await admin.entities.AuditLog.create({
-        user_id: user.id,
-        user_role: user.role,
-        action: 'fare_received_confirmed',
-        entity_type: 'Booking',
-        record_id: booking_id,
-        metadata: { booking_id, fare_amount: booking.fare_amount || null },
+    const bookings =
+      await base44.entities.Booking.filter({
+        id: booking_id,
       });
-    } catch (e) {}
 
-    try {
-      if (booking.passenger_id) {
-        await sendNotification(admin, {
-          user_id: booking.passenger_id,
-          event_type: NOTIFICATION_EVENTS.BOOKING_CONFIRMED,
-          title: 'Fare received',
-          message: 'Your driver confirmed they received your fare. Thank you for travelling with Treba.',
-          related_id: booking_id,
-        });
-      }
-    } catch (e) {}
+    const booking = bookings?.[0];
 
-    return Response.json({ status: 'received', fare_received: true, fare_received_at: now });
+    if (!booking) {
+      return Response.json(
+        { error: "Booking not found" },
+        { status: 404 }
+      );
+    }
+
+    const allocations =
+      await base44.entities.Allocation.filter({
+        id: booking.allocation_id,
+      });
+
+    const allocation = allocations?.[0];
+
+    if (!allocation) {
+      return Response.json(
+        { error: "Allocation not found" },
+        { status: 404 }
+      );
+    }
+
+    if (allocation.driver_id !== user.id) {
+      return Response.json(
+        { error: "Not authorised" },
+        { status: 403 }
+      );
+    }
+
+    /*
+     * Treba does not collect or transfer the fare.
+     *
+     * This is simply a driver confirmation.
+     */
+    const updated =
+      await base44.entities.Booking.update(
+        booking.id,
+        {
+          payment_status:
+            "fare_received",
+
+          fare_received: true,
+
+          fare_received_at:
+            new Date().toISOString(),
+        }
+      );
+
+    return Response.json({
+      success: true,
+      booking: updated,
+      message:
+        "Driver recorded that the agreed fare was received directly from the passenger.",
+    });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error(
+      "confirmFareReceived error:",
+      error
+    );
+
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to confirm fare",
+      },
+      { status: 500 }
+    );
   }
-}
+});

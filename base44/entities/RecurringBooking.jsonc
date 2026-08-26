@@ -1,0 +1,108 @@
+{
+  "name": "RecurringBooking",
+  "type": "object",
+  "properties": {
+    "passenger_id": {
+      "type": "string"
+    },
+
+    "route_id": {
+      "type": "string"
+    },
+
+    "origin": {
+      "type": "string"
+    },
+
+    "destination": {
+      "type": "string"
+    },
+
+    "pickup_location": {
+      "type": "string"
+    },
+
+    "dropoff_location": {
+      "type": "string"
+    },
+
+    "days_of_week": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "preferred_time_from": {
+      "type": "string"
+    },
+
+    "preferred_time_to": {
+      "type": "string"
+    },
+
+    "number_of_seats": {
+      "type": "number",
+      "default": 1
+    },
+
+    "start_date": {
+      "type": "string"
+    },
+
+    "end_date": {
+      "type": "string"
+    },
+
+    "luggage_small_bags": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_standard_bags": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_large_suitcases": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_oversized_items": {
+      "type": "number",
+      "default": 0
+    },
+
+    "notes": {
+      "type": "string"
+    },
+
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "cancelled",
+        "completed"
+      ],
+      "default": "active"
+    },
+
+    "last_generated_date": {
+      "type": "string"
+    }
+  },
+
+  "required": [
+    "passenger_id",
+    "origin",
+    "destination",
+    "days_of_week",
+    "preferred_time_from",
+    "preferred_time_to",
+    "number_of_seats",
+    "start_date",
+    "status"
+  ]
+}

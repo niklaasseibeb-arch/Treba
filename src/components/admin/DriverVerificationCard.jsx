@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Loader2, CheckCircle2, XCircle, ShieldCheck, Car, Wallet, BadgeCheck, AlertTriangle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, ShieldCheck, Car, BadgeCheck, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/StatusBadge";
 
@@ -35,7 +35,7 @@ export default function DriverVerificationCard({ driver, vehicle, wallet, onActi
   const driverApproved = driver.verification_status === "approved";
   const vehicleApproved = vehicle?.verification_status === "approved";
   const walletVerified = wallet?.verification_status === "verified";
-  const canActivate = driverApproved && vehicleApproved && walletVerified && !driver.is_activated_for_paid_bookings;
+  const canActivate = driverApproved && vehicleApproved && !driver.is_activated_for_paid_bookings;
 
   const handleActivate = async () => {
     setActivating(true);
@@ -85,12 +85,6 @@ export default function DriverVerificationCard({ driver, vehicle, wallet, onActi
             onReject={() => onAction("vehicle_reject", vehicle.id)} />
         )}
 
-        {wallet && (
-          <ActionRow label="Payout method" status={wallet.verification_status}
-            approveLabel="Verify" rejectLabel="Reject"
-            onApprove={() => onAction("wallet_verify", wallet.id)}
-            onReject={() => onAction("wallet_reject", wallet.id)} />
-        )}
       </div>
 
       {/* Vehicle summary */}
@@ -104,17 +98,7 @@ export default function DriverVerificationCard({ driver, vehicle, wallet, onActi
         </div>
       )}
 
-      {/* Wallet summary */}
-      {wallet && (
-        <div className="flex items-start gap-2 rounded-lg bg-muted/30 px-3 py-2 text-sm">
-          <Wallet className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
-          <div>
-            <span className="font-medium capitalize">{wallet.payout_method_type?.replace("_", " ")}</span>
-            <span className="text-muted-foreground"> · {wallet.provider} · {wallet.account_number}</span>
-          </div>
-        </div>
-      )}
-
+      
       {/* Activation */}
       {canActivate && (
         <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2.5">

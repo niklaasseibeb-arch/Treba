@@ -4,128 +4,134 @@
   "properties": {
     "user_id": {
       "type": "string",
-      "description": "Reference to the User this driver profile belongs to"
+      "description": "ID of the authenticated Treba user"
     },
+
     "full_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Driver's full name"
     },
+
     "phone": {
-      "type": "string"
+      "type": "string",
+      "description": "Driver's mobile phone number"
     },
+
+    "profile_photo_url": {
+      "type": "string",
+      "description": "URL of the driver's profile photo"
+    },
+
     "license_number": {
-      "type": "string"
+      "type": "string",
+      "description": "Driver licence number"
     },
+
     "license_expiry": {
       "type": "string",
-      "format": "date"
+      "description": "Driver licence expiry date"
     },
-    "verification_status": {
+
+    "driving_experience_years": {
+      "type": "number",
+      "description": "Number of years of driving experience",
+      "default": 0
+    },
+
+    "vehicle_id": {
       "type": "string",
+      "description": "ID of the driver's registered vehicle"
+    },
+
+    "driver_status": {
+      "type": "string",
+      "description": "Driver account status",
       "enum": [
         "pending",
-        "approved",
-        "rejected"
+        "active",
+        "suspended",
+        "inactive"
       ],
       "default": "pending"
     },
+
     "availability_status": {
       "type": "string",
+      "description": "Driver availability for Treba allocation",
       "enum": [
         "available",
         "unavailable"
       ],
       "default": "available"
     },
-    "rating": {
-      "type": "number",
-      "default": 0
-    },
-    "account_status": {
-      "type": "string",
-      "enum": [
-        "active",
-        "suspended",
-        "pending"
-      ],
-      "default": "pending"
-    },
-    "id_number": {
-      "type": "string",
-      "description": "National ID or verification document number"
-    },
-    "address": {
-      "type": "string"
-    },
-    "profile_photo_url": {
-      "type": "string"
-    },
-    "driving_experience_years": {
-      "type": "number",
-      "default": 0
-    },
+
     "preferred_routes": {
       "type": "array",
+      "description": "Town-to-town corridors the driver is willing to operate",
       "items": {
         "type": "string"
-      },
-      "description": "Town-to-town routes the driver is willing to operate, e.g. 'Windhoek - Swakopmund'"
+      }
     },
-    "vehicle_id": {
+
+    "rating": {
+      "type": "number",
+      "description": "Average passenger rating",
+      "default": 0
+    },
+
+    "rating_count": {
+      "type": "number",
+      "description": "Number of ratings received",
+      "default": 0
+    },
+
+    "trips_completed": {
+      "type": "number",
+      "description": "Number of completed trips",
+      "default": 0
+    },
+
+    "maximum_trips_per_day": {
+      "type": "number",
+      "description": "Maximum trips allowed per day",
+      "default": 2
+    },
+
+    "minimum_rest_hours": {
+      "type": "number",
+      "description": "Minimum rest hours used for scheduling",
+      "default": 8
+    },
+
+    "last_trip_end": {
       "type": "string",
-      "description": "Reference to the Driver's primary Vehicle"
+      "description": "Date and time the driver's last trip ended"
     },
-    "wallet_id": {
-      "type": "string",
-      "description": "Reference to the Driver's DriverWallet"
+
+    "scheduling_score": {
+      "type": "number",
+      "description": "Score used by Treba allocation",
+      "default": 0
     },
-    "is_activated_for_paid_bookings": {
-      "type": "boolean",
-      "default": false,
-      "description": "True only once the driver has a verified payout method and admin approval"
+
+    "fatigue_score": {
+      "type": "number",
+      "description": "Driver fatigue score",
+      "default": 0
+    },
+
+    "fairness_score": {
+      "type": "number",
+      "description": "Driver fairness score used in allocation",
+      "default": 0
     }
   },
+
   "required": [
-    "full_name"
-  ],
-  "rls": {
-    "read": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+    "user_id",
+    "full_name",
+    "phone",
+    "driver_status",
+    "availability_status"
+  ]
 }

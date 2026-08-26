@@ -2,234 +2,183 @@
   "name": "Booking",
   "type": "object",
   "properties": {
-    "passenger_id": {
-      "type": "string",
-      "description": "Reference to the PassengerProfile that booked"
+    "allocation_id": {
+      "type": "string"
     },
+
+    "trip_request_id": {
+      "type": "string"
+    },
+
+    "passenger_id": {
+      "type": "string"
+    },
+
     "passenger_name": {
       "type": "string"
     },
-    "trip_id": {
-      "type": "string",
-      "description": "Reference to the scheduled service (Allocation/Trip) this booking is on"
-    },
-    "trip_request_id": {
-      "type": "string",
-      "description": "Reference to the TripRequest this booking originated from"
-    },
-    "driver_id": {
+
+    "booked_by_passenger_id": {
       "type": "string"
     },
-    "route_id": {
-      "type": "string",
-      "description": "Reference to the Route"
+
+    "booked_by_passenger_name": {
+      "type": "string"
     },
+
+    "traveller_name": {
+      "type": "string"
+    },
+
+    "traveller_phone": {
+      "type": "string"
+    },
+
+    "booking_reference": {
+      "type": "string"
+    },
+
+  
+    "booking_type": {
+      "type": "string",
+      "enum": [
+        "single",
+        "group",
+        "proxy",
+        "recurring"
+      ],
+      "default": "single"
+    },
+
+    "booked_for_someone_else": {
+      "type": "boolean",
+      "default": false
+    },
+
+    "recurring_booking_id": {
+      "type": "string"
+    },
+
+    "travel_date": {
+      "type": "string"
+    },
+
+    "departure_time": {
+      "type": "string"
+    },
+
     "origin": {
       "type": "string"
     },
+
     "destination": {
       "type": "string"
     },
+
     "pickup_location": {
       "type": "string"
     },
+
     "dropoff_location": {
       "type": "string"
     },
-    "luggage_summary": {
-      "type": "string",
-      "description": "Human-readable luggage summary captured from the trip request at booking time"
+
+    "driver_id": {
+      "type": "string"
     },
+
+    "driver_name": {
+      "type": "string"
+    },
+
+    "vehicle_id": {
+      "type": "string"
+    },
+
     "number_of_seats": {
       "type": "number",
       "default": 1
     },
-    "fare_amount": {
+
+    "driver_fare": {
       "type": "number",
-      "description": "The mutually-agreed fare. Never estimated by Treba."
+      "default": 0
     },
-    "booking_status": {
+
+    "pickup_charge": {
+      "type": "number",
+      "default": 0
+    },
+
+    "dropoff_charge": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_charge": {
+      "type": "number",
+      "default": 0
+    },
+
+    "total_fare": {
+      "type": "number",
+      "default": 0
+    },
+
+    "payment_method": {
       "type": "string",
       "enum": [
-        "pending",
-        "confirmed",
-        "cancelled",
-        "completed"
+        "direct_to_driver"
       ],
-      "default": "pending"
+      "default": "direct_to_driver"
     },
-    "payment_arrangement": {
-      "type": "string",
-      "description": "How the passenger pays the driver DIRECTLY (e.g. 'Cash to driver', 'Direct to driver (arranged between passenger and driver)'). Treba does NOT collect, process, hold, transfer or refund the fare."
-    },
+
     "payment_status": {
       "type": "string",
       "enum": [
         "pending",
-        "paid",
-        "refunded"
+        "paid_to_driver",
+        "confirmed",
+        "disputed"
       ],
       "default": "pending"
     },
-    "payment_method": {
+
+    "booking_status": {
       "type": "string",
       "enum": [
-        "bank_card",
-        "mobile_wallet",
-        "pay2cell",
-        "other_digital",
-        "cash_to_driver"
+        "confirmed",
+        "cancelled",
+        "completed",
+        "no_show",
+        "driver_no_show"
       ],
-      "description": "Payment method selected for this booking"
+      "default": "confirmed"
     },
-    "payment_state": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "paid",
-        "cash_pending",
-        "cash_overdue",
-        "failed",
-        "refunded"
-      ],
-      "description": "Normalized payment state: PAID, CASH_PENDING, CASH_OVERDUE, FAILED, REFUNDED (or pending awaiting digital payment)."
-    },
-    "priority": {
-      "type": "string",
-      "enum": [
-        "high",
-        "medium",
-        "low",
-        "released"
-      ],
-      "description": "Seat priority. HIGH = paid (digital or cash-confirmed), MEDIUM = cash-pending within deadline, LOW = cash overdue, RELEASED = deadline expired."
-    },
-    "cash_status": {
-      "type": "string",
-      "enum": [
-        "cash_pending",
-        "cash_overdue",
-        "cash_paid",
-        "cash_no_show"
-      ],
-      "description": "Controlled cash payment status. Cash is not equivalent to a completed digital payment."
-    },
-    "cash_check_in_deadline": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Deadline by which cash must be paid/checked in, before scheduled departure"
-    },
-    "confirmed_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Confirmation timestamp \u2014 set when the booking becomes confirmed/paid"
-    },
-    "fare_received": {
-      "type": "boolean",
-      "default": false,
-      "description": "Operational record only \u2014 true once the driver confirms they received the fare directly from the passenger. Treba does not process the payment."
-    },
-    "fare_received_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Timestamp the driver confirmed the fare was received (operational only)."
-    },
-    "passenger_arrived": {
-      "type": "boolean",
-      "default": false,
-      "description": "True once the driver confirms the passenger arrived"
-    },
-    "no_show_status": {
-      "type": "string",
-      "enum": [
-        "none",
-        "passenger_no_show",
-        "disputed",
-        "upheld",
-        "overturned",
-        "arrived"
-      ],
-      "default": "none",
-      "description": "Passenger no-show state for a paid/confirmed booking."
-    },
-    "no_show_report_id": {
-      "type": "string",
-      "description": "Reference to the passenger NoShowReport, if one was filed"
-    },
-    "driver_no_show_status": {
-      "type": "string",
-      "enum": [
-        "none",
-        "driver_no_show",
-        "under_review",
-        "upheld",
-        "overturned",
-        "resolved"
-      ],
-      "default": "none",
-      "description": "Driver no-show state for a paid/confirmed booking."
-    },
-    "driver_no_show_report_id": {
-      "type": "string",
-      "description": "Reference to the DriverNoShowReport, if one was filed"
-    },
-    "was_no_show": {
+
+    "fare_received_by_driver": {
       "type": "boolean",
       "default": false
+    },
+
+    "fare_received_at": {
+      "type": "string"
+    },
+
+    "created_at": {
+      "type": "string"
+    },
+
+    "updated_at": {
+      "type": "string"
     }
   },
+
   "required": [
-    "trip_id",
-    "number_of_seats"
-  ],
-  "rls": {
-    "read": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.driver_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.driver_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.driver_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+    "allocation_id",
+    "passenger_id",
+    "number_of_seats",
+    "travel_date",
+    "booking_status"
+  ]
 }

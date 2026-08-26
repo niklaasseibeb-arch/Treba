@@ -1,158 +1,563 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { rankEligibleDrivers } from '../../shared/allocationEngine.ts';
-import { getActiveMarketplaceDriverUserIds } from '../../shared/driverSubscription.ts';
-import { sendNotification, NOTIFICATION_EVENTS } from '../../shared/notifications.ts';
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 
-async function findReplacement(admin, allocation, declinedIds) {
-  const route = await admin.entities.Route.get(allocation.route_id);
-  const drivers = await admin.entities.DriverProfile.list('-created_date', 500);
-  const vehicles = await admin.entities.Vehicle.list('-created_date', 500);
-  const vehiclesByDriver = {};
-  for (const v of vehicles) {
-    if (v.driver_id) vehiclesByDriver[v.driver_id] = v;
-  }
-  const existing = await admin.entities.Allocation.list('-created_date', 500);
-  return rankEligibleDrivers({
-    route,
-    date: allocation.date,
-    departureTime: allocation.departure_time,
-    drivers,
-    vehiclesByDriver,
-    existingAllocations: existing,
-    excludeDriverIds: declinedIds,
-  });
-}
+import {
+  rankEligibleDrivers
+} from "../../shared/allocationEngine.ts";
 
-function vehicleLabel(v) {
-  return `${v.make} ${v.model} (${v.registration_number})`;
-}
+import {
+  getActiveMarketplaceDriverUserIds
+} from "../../shared/driverSubscription.ts";
 
-export default async function(req) {
+import {
+  sendNotification,
+  NOTIFICATION_EVENTS
+} from "../../shared/notifications.ts";
+
+export default async function (
+  req
+) {
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const base44 =
+      createClientFromRequest(req);
 
-    const body = await req.json().catch(() => ({}));
-    const { allocation_id, action, decline_reason } = body || {};
-    if (!allocation_id || !action) {
-      return Response.json({ error: 'allocation_id and action are required' }, { status: 400 });
+    const user =
+      await base44.auth.me();
+
+    if (!user) {
+      return Response.json(
+        {
+          error:
+            "Authentication required"
+        },
+        { status: 401 }
+      );
     }
 
-    const admin = base44.asServiceRole;
-    const allocation = await admin.entities.Allocation.get(allocation_id);
-    if (!allocation) return Response.json({ error: 'Allocation not found' }, { status: 404 });
+    const body =
+      await req.json().catch(
+        () => ({})
+      );
 
-    const now = new Date().toISOString();
-    const isAllocatedDriver = allocation.allocated_driver_user_id === user.id;
-    const isAdmin = user.role === 'admin';
+    const {
+      allocation_id,
+      action
+    } = body || {};
 
-    if (action === 'confirm') {
-      if (!isAllocatedDriver && !isAdmin) {
-        return Response.json({ error: 'Only the allocated driver can confirm' }, { status: 403 });
-      }
-      const updated = await admin.entities.Allocation.update(allocation_id, {
-        status: 'confirmed',
-        driver_response_at: now,
-      });
+    if (
+      !allocation_id ||
+      !action
+    ) {
+      return Response.json(
+        {
+          error:
+            "allocation_id and action are required"
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      ![
+        "confirm",
+        "decline"
+      ].includes(action)
+    ) {
+      return Response.json(
+        {
+          error:
+            "Action must be confirm or decline"
+        },
+        { status: 400 }
+      );
+    }
+
+    const admin =
+      base44.asServiceRole;
+
+    /*
+     * Load allocation.
+     */
+    const allocation =
+      await admin.entities.Allocation.get(
+        allocation_id
+      );
+
+    if (!allocation) {
+      return Response.json(
+        {
+          error:
+            "Allocation not found"
+        },
+        { status: 404 }
+      );
+    }
+
+    /*
+     * Driver can only respond
+     * to their own allocation.
+     *
+     * Admin may also perform the action.
+     */
+    if (
+      allocation.driver_user_id !==
+        user.id &&
+      allocation.driver_id !==
+        user.id &&
+      user.role !== "admin"
+    ) {
+      return Response.json(
+        {
+          error:
+            "Not authorised"
+        },
+        { status: 403 }
+      );
+    }
+
+    /*
+     * Only awaiting confirmation
+     * allocations may be responded to.
+     */
+    if (
+      allocation.status !==
+      "awaiting_confirmation"
+    ) {
+      return Response.json(
+        {
+          error:
+            `Allocation cannot be ${action}ed because its current status is ${allocation.status}.`
+        },
+        { status: 400 }
+      );
+    }
+
+    /*
+     * =========================
+     * CONFIRM
+     * =========================
+     */
+    if (
+      action === "confirm"
+    ) {
+      const updated =
+        await admin.entities.Allocation.update(
+          allocation.id,
+          {
+            status:
+              "confirmed",
+
+            is_visible_to_passengers:
+              true,
+
+            passenger_booking_open:
+              true,
+
+            updated_at:
+              new Date().toISOString()
+          }
+        );
+
+      /*
+       * Notify driver.
+       */
       try {
-        await sendNotification(admin, { user_id: allocation.allocated_driver_user_id, event_type: NOTIFICATION_EVENTS.ALLOCATION_CONFIRMED, title: 'Allocation confirmed', message: `Your allocation for ${allocation.origin} → ${allocation.destination} on ${allocation.date} at ${allocation.departure_time} is confirmed.`, related_id: allocation_id });
-      } catch (e) {}
-      return Response.json({ allocation: updated });
+        await sendNotification(
+          admin,
+          {
+            user_id:
+              allocation.driver_user_id,
+
+            event_type:
+              NOTIFICATION_EVENTS
+                .ALLOCATION_CONFIRMED,
+
+            title:
+              "Allocation confirmed",
+
+            message:
+              `Your ${allocation.origin} → ${allocation.destination} trip on ${allocation.date} at ${allocation.departure_time} is confirmed.`,
+
+            related_id:
+              allocation.id
+          }
+        );
+      } catch (notificationError) {
+        console.error(
+          "Confirmation notification failed:",
+          notificationError
+        );
+      }
+
+      return Response.json(
+        {
+          success: true,
+          action: "confirm",
+          allocation: updated
+        }
+      );
     }
 
-    if (action === 'decline') {
-      if (!isAllocatedDriver && !isAdmin) {
-        return Response.json({ error: 'Only the allocated driver can decline' }, { status: 403 });
-      }
-      const declinedIds = Array.isArray(allocation.declined_driver_ids)
-        ? [...allocation.declined_driver_ids]
-        : [];
-      if (allocation.allocated_driver_id && !declinedIds.includes(allocation.allocated_driver_id)) {
-        declinedIds.push(allocation.allocated_driver_id);
-      }
+    /*
+     * =========================
+     * DECLINE
+     * =========================
+     */
 
-      // A replacement allocation is a NEW allocation for the next driver — only
-      // drivers with active marketplace access may receive it.
-      let ranked = await findReplacement(admin, allocation, declinedIds);
-      const accessUserIds = await getActiveMarketplaceDriverUserIds(admin);
-      ranked = ranked.filter((r) => r.driver?.user_id && accessUserIds.has(r.driver.user_id));
-      if (ranked.length) {
-        const next = ranked[0];
-        const updated = await admin.entities.Allocation.update(allocation_id, {
-          allocated_driver_id: next.driver.id,
-          allocated_driver_name: next.driver.full_name,
-          allocated_driver_user_id: next.driver.user_id,
-          vehicle_id: next.vehicle.id,
-          vehicle_label: vehicleLabel(next.vehicle),
-          total_seats: next.vehicle.seating_capacity || 0,
-          available_seats: next.vehicle.seating_capacity || 0,
-          status: 'awaiting_confirmation',
-          replacement_driver_id: next.driver.id,
-          replacement_driver_name: next.driver.full_name,
-          declined_driver_ids: declinedIds,
-          needs_replacement: false,
-          driver_response_at: now,
-          decline_reason: decline_reason || allocation.decline_reason,
-        });
-        try {
-          await sendNotification(admin, { user_id: next.driver.user_id, event_type: NOTIFICATION_EVENTS.ALLOCATION_CONFIRMATION_REQUIRED, title: 'Allocation needs confirmation', message: `You have been allocated ${allocation.origin} → ${allocation.destination} on ${allocation.date} at ${allocation.departure_time}. Confirm or decline your availability.`, related_id: allocation_id });
-        } catch (e) {}
-        return Response.json({ allocation: updated, reassigned: true });
+    const declinedDriverId =
+      allocation.driver_id;
+
+    /*
+     * Mark original allocation declined.
+     */
+    const declinedDriverIds =
+      Array.isArray(
+        allocation.declined_driver_ids
+      )
+        ? [
+            ...allocation.declined_driver_ids,
+            declinedDriverId
+          ]
+        : [
+            declinedDriverId
+          ];
+
+    const declinedAllocation =
+      await admin.entities.Allocation.update(
+        allocation.id,
+        {
+          status:
+            "declined",
+
+          is_visible_to_passengers:
+            false,
+
+          passenger_booking_open:
+            false,
+
+          declined_driver_ids:
+            declinedDriverIds,
+
+          updated_at:
+            new Date().toISOString()
+        }
+      );
+
+    /*
+     * Load drivers, vehicles and
+     * existing allocations.
+     */
+    const [
+      drivers,
+      vehicles,
+      existingAllocations
+    ] = await Promise.all([
+      admin.entities.DriverProfile.list(
+        "-created_date",
+        500
+      ),
+
+      admin.entities.Vehicle.list(
+        "-created_date",
+        500
+      ),
+
+      admin.entities.Allocation.list(
+        "-date",
+        1000
+      )
+    ]);
+
+    /*
+     * Index vehicles by driver.
+     */
+    const vehiclesByDriver: Record<
+      string,
+      any
+    > = {};
+
+    for (const vehicle of vehicles) {
+      if (
+        vehicle.driver_id &&
+        vehicle.active !== false
+      ) {
+        if (
+          !vehiclesByDriver[
+            vehicle.driver_id
+          ]
+        ) {
+          vehiclesByDriver[
+            vehicle.driver_id
+          ] = vehicle;
+        }
       }
-      const updated = await admin.entities.Allocation.update(allocation_id, {
-        status: 'declined',
-        driver_response_at: now,
-        decline_reason: decline_reason || allocation.decline_reason,
-        declined_driver_ids: declinedIds,
-        needs_replacement: true,
-      });
-      return Response.json({
-        allocation: updated,
-        reassigned: false,
-        message: 'No eligible replacement driver found',
-      });
     }
 
-    if (action === 'reassign') {
-      if (!isAdmin) return Response.json({ error: 'Admin only' }, { status: 403 });
-      const declinedIds = Array.isArray(allocation.declined_driver_ids)
-        ? [...allocation.declined_driver_ids]
-        : [];
-      if (allocation.allocated_driver_id && !declinedIds.includes(allocation.allocated_driver_id)) {
-        declinedIds.push(allocation.allocated_driver_id);
-      }
-      // Reassignment is a NEW allocation — only drivers with active marketplace
-      // access may receive it.
-      let ranked = await findReplacement(admin, allocation, declinedIds);
-      const accessUserIds = await getActiveMarketplaceDriverUserIds(admin);
-      ranked = ranked.filter((r) => r.driver?.user_id && accessUserIds.has(r.driver.user_id));
-      if (!ranked.length) {
-        return Response.json({ error: 'No eligible replacement driver with active marketplace access' }, { status: 409 });
-      }
-      const next = ranked[0];
-      const updated = await admin.entities.Allocation.update(allocation_id, {
-        allocated_driver_id: next.driver.id,
-        allocated_driver_name: next.driver.full_name,
-        allocated_driver_user_id: next.driver.user_id,
-        vehicle_id: next.vehicle.id,
-        vehicle_label: vehicleLabel(next.vehicle),
-        total_seats: next.vehicle.seating_capacity || 0,
-        available_seats: next.vehicle.seating_capacity || 0,
-        status: 'awaiting_confirmation',
-        replacement_driver_id: next.driver.id,
-        replacement_driver_name: next.driver.full_name,
-        declined_driver_ids: declinedIds,
-        needs_replacement: false,
+    /*
+     * Find replacement candidates.
+     */
+    const ranked =
+      rankEligibleDrivers({
+        route: {
+          id:
+            allocation.route_id,
+
+          route_code:
+            allocation.route_code,
+
+          origin_town:
+            allocation.origin,
+
+          destination_town:
+            allocation.destination
+        },
+
+        date:
+          allocation.date,
+
+        departureTime:
+          allocation.departure_time,
+
+        drivers,
+
+        vehiclesByDriver,
+
+        existingAllocations,
+
+        excludeDriverIds:
+          declinedDriverIds
       });
-      try {
-        await sendNotification(admin, { user_id: next.driver.user_id, event_type: NOTIFICATION_EVENTS.ALLOCATION_CONFIRMATION_REQUIRED, title: 'Allocation needs confirmation', message: `You have been allocated ${allocation.origin} → ${allocation.destination} on ${allocation.date} at ${allocation.departure_time}. Confirm or decline your availability.`, related_id: allocation_id });
-      } catch (e) {}
-      return Response.json({ allocation: updated, reassigned: true });
+
+    /*
+     * Only active marketplace drivers.
+     */
+    const accessUserIds =
+      await getActiveMarketplaceDriverUserIds(
+        admin
+      );
+
+    const candidates =
+      ranked.filter(
+        (candidate) =>
+          candidate.driver?.user_id &&
+          accessUserIds.has(
+            candidate.driver.user_id
+          )
+      );
+
+    /*
+     * No replacement currently available.
+     */
+    if (!candidates.length) {
+      return Response.json(
+        {
+          success: true,
+
+          allocation:
+            declinedAllocation,
+
+          replacement:
+            null,
+
+          message:
+            "Allocation declined. No replacement driver is currently available."
+        }
+      );
     }
 
-    return Response.json({ error: 'Unknown action' }, { status: 400 });
+    /*
+     * Select next driver.
+     */
+    const best =
+      candidates[0];
+
+    const driver =
+      best.driver;
+
+    const vehicle =
+      best.vehicle;
+
+    const totalSeats =
+      Number(
+        vehicle.seating_capacity || 0
+      );
+
+    /*
+     * Create replacement allocation.
+     */
+    const replacement =
+      await admin.entities.Allocation.create(
+        {
+          route_id:
+            allocation.route_id,
+
+          route_code:
+            allocation.route_code ||
+            "",
+
+          origin:
+            allocation.origin,
+
+          destination:
+            allocation.destination,
+
+          date:
+            allocation.date,
+
+          departure_time:
+            allocation.departure_time,
+
+          timeslot:
+            allocation.timeslot ||
+            "",
+
+          driver_id:
+            driver.id,
+
+          driver_name:
+            driver.full_name ||
+            "",
+
+          driver_user_id:
+            driver.user_id ||
+            "",
+
+          vehicle_id:
+            vehicle.id,
+
+          vehicle_label:
+            `${vehicle.make || ""} ${vehicle.model || ""} (${vehicle.registration_number || ""})`.trim(),
+
+          total_seats:
+            totalSeats,
+
+          booked_seats: 0,
+
+          available_seats:
+            totalSeats,
+
+          status:
+            "awaiting_confirmation",
+
+          queue_position:
+            Number(
+              allocation.queue_position ||
+              1
+            ) + 1,
+
+          is_visible_to_passengers:
+            false,
+
+          passenger_booking_open:
+            false,
+
+          pickup_location:
+            "",
+
+          dropoff_location:
+            "",
+
+          driver_fare:
+            0,
+
+          pickup_charge:
+            0,
+
+          dropoff_charge:
+            0,
+
+          luggage_charge:
+            0,
+
+          total_fare:
+            0,
+
+          fare_status:
+            "pending",
+
+          payment_method:
+            "direct_to_driver",
+
+          payment_status:
+            "not_due",
+
+          declined_driver_ids:
+            declinedDriverIds,
+
+          replacement_for_allocation_id:
+            allocation.id,
+
+          created_at:
+            new Date().toISOString(),
+
+          updated_at:
+            new Date().toISOString()
+        }
+      );
+
+    /*
+     * Notify replacement driver.
+     */
+    try {
+      await sendNotification(
+        admin,
+        {
+          user_id:
+            driver.user_id,
+
+          event_type:
+            NOTIFICATION_EVENTS
+              .ALLOCATION_CONFIRMATION_REQUIRED,
+
+          title:
+            "Trip allocation available",
+
+          message:
+            `You have been selected for ${allocation.origin} → ${allocation.destination} on ${allocation.date} at ${allocation.departure_time}. Please confirm or decline.`,
+
+          related_id:
+            replacement.id
+        }
+      );
+    } catch (notificationError) {
+      console.error(
+        "Replacement notification failed:",
+        notificationError
+      );
+    }
+
+    return Response.json(
+      {
+        success: true,
+
+        action: "decline",
+
+        allocation:
+          declinedAllocation,
+
+        replacement,
+
+        replacement_driver:
+          driver.full_name ||
+          "",
+
+        candidates:
+          candidates.length
+      }
+    );
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error(
+      "respondToAllocation error:",
+      error
+    );
+
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to process allocation response"
+      },
+      { status: 500 }
+    );
   }
 }

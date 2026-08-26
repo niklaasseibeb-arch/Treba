@@ -1,0 +1,168 @@
+{
+  "name": "DriverOffer",
+  "type": "object",
+  "properties": {
+    "trip_request_id": {
+      "type": "string",
+      "description": "ID of the passenger trip request"
+    },
+
+    "driver_id": {
+      "type": "string",
+      "description": "ID of the driver making the offer"
+    },
+
+    "route_id": {
+      "type": "string",
+      "description": "ID of the route associated with the offer"
+    },
+
+    "origin": {
+      "type": "string",
+      "description": "Origin town"
+    },
+
+    "destination": {
+      "type": "string",
+      "description": "Destination town"
+    },
+
+    "travel_date": {
+      "type": "string",
+      "description": "Requested travel date"
+    },
+
+    "departure_time": {
+      "type": "string",
+      "description": "Scheduled or proposed departure time"
+    },
+
+    "available_seats": {
+      "type": "number",
+      "description": "Number of passenger seats the driver can offer for this trip",
+      "default": 0
+    },
+
+    "fare_offer": {
+      "type": "number",
+      "description": "Fare offered by the driver per passenger"
+    },
+
+    "pickup_fee": {
+      "type": "number",
+      "description": "Additional pickup charge, if applicable",
+      "default": 0
+    },
+
+    "dropoff_fee": {
+      "type": "number",
+      "description": "Additional drop-off charge, if applicable",
+      "default": 0
+    },
+
+    "luggage_fee": {
+      "type": "number",
+      "description": "Additional luggage charge, if applicable",
+      "default": 0
+    },
+
+    "total_fare": {
+      "type": "number",
+      "description": "Total passenger fare including applicable additional charges"
+    },
+
+    "payment_method": {
+      "type": "string",
+      "description": "How the passenger pays the driver",
+      "enum": [
+        "direct_to_driver"
+      ],
+      "default": "direct_to_driver"
+    },
+
+    "fare_status": {
+      "type": "string",
+      "description": "Status of the fare offer",
+      "enum": [
+        "offered",
+        "accepted",
+        "rejected",
+        "expired",
+        "cancelled"
+      ],
+      "default": "offered"
+    },
+
+    "offer_status": {
+      "type": "string",
+      "description": "Current status of the driver offer",
+      "enum": [
+        "offered",
+        "available",
+        "declined",
+        "expired",
+        "selected",
+        "cancelled"
+      ],
+      "default": "offered"
+    },
+
+    "max_offers": {
+      "type": "number",
+      "description": "Maximum number of driver opportunities Treba may create for this request",
+      "default": 5
+    },
+
+    "passenger_seats_requested": {
+      "type": "number",
+      "description": "Number of seats requested by the passenger"
+    },
+
+    "seats_reserved": {
+      "type": "number",
+      "description": "Number of seats currently reserved from this offer",
+      "default": 0
+    },
+
+    "vehicle_id": {
+      "type": "string",
+      "description": "Vehicle associated with the driver offer"
+    },
+
+    "driver_rating": {
+      "type": "number",
+      "description": "Driver rating at the time of the offer"
+    },
+
+    "driver_rating_count": {
+      "type": "number",
+      "description": "Number of ratings used for the driver's rating"
+    },
+
+    "responded_at": {
+      "type": "string",
+      "description": "Timestamp when the driver responded to the request"
+    },
+
+    "selected_at": {
+      "type": "string",
+      "description": "Timestamp when the offer was selected"
+    },
+
+    "expires_at": {
+      "type": "string",
+      "description": "Timestamp after which the offer expires"
+    }
+  },
+
+  "required": [
+    "trip_request_id",
+    "driver_id",
+    "origin",
+    "destination",
+    "travel_date",
+    "available_seats",
+    "fare_offer",
+    "offer_status"
+  ]
+}

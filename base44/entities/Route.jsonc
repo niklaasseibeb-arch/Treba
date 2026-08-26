@@ -3,71 +3,65 @@
   "type": "object",
   "properties": {
     "route_code": {
-      "type": "string",
-      "description": "Human-readable route identifier, e.g. WDH-SWK"
+      "type": "string"
     },
+
     "origin_town": {
       "type": "string"
     },
+
     "destination_town": {
       "type": "string"
     },
-    "is_active": {
-      "type": "boolean",
-      "default": true
-    },
+
     "distance_km": {
-      "type": "number",
-      "description": "Approximate route distance in kilometres"
+      "type": "number"
     },
+
     "approximate_duration_minutes": {
-      "type": "number",
-      "description": "Approximate travel duration in minutes"
+      "type": "number"
     },
+
     "standard_pickup_points": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "Designated standard pickup points along the route"
+      }
     },
+
     "standard_drop_off_points": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "Designated standard drop-off points along the route"
+      }
     },
+
+    "default_timeslots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+
     "route_status": {
       "type": "string",
       "enum": [
         "active",
-        "inactive",
-        "suspended"
+        "inactive"
       ],
       "default": "active"
     }
   },
+
   "required": [
     "origin_town",
-    "destination_town"
-  ],
-  "rls": {
-    "read": {},
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
-  }
+    "destination_town",
+    "is_active",
+    "route_status"
+  ]
 }

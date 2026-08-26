@@ -4,101 +4,157 @@
   "properties": {
     "driver_id": {
       "type": "string",
-      "description": "Reference to the DriverProfile that owns this vehicle"
+      "description": "ID of the driver who owns or operates this vehicle"
     },
-    "registration_number": {
-      "type": "string"
-    },
+
     "make": {
-      "type": "string"
+      "type": "string",
+      "description": "Vehicle manufacturer"
     },
+
     "model": {
-      "type": "string"
+      "type": "string",
+      "description": "Vehicle model"
     },
+
+    "year": {
+      "type": "number",
+      "description": "Vehicle manufacture year"
+    },
+
+    "registration_number": {
+      "type": "string",
+      "description": "Vehicle registration number"
+    },
+
     "vehicle_type": {
       "type": "string",
-      "enum": [
-        "sedan",
-        "suv",
-        "minibus",
-        "van",
-        "bus"
-      ]
+      "description": "Type of vehicle"
     },
-    "year": {
-      "type": "number"
-    },
+
     "seating_capacity": {
       "type": "number",
-      "default": 4
+      "description": "Number of passenger seats"
     },
-    "verification_status": {
+
+    "luggage_capacity": {
+      "type": "number",
+      "description": "Approximate luggage capacity in bags"
+    },
+
+    "general_condition": {
       "type": "string",
+      "description": "General condition of the vehicle",
       "enum": [
+        "excellent",
+        "good",
+        "acceptable",
+        "needs_attention"
+      ]
+    },
+
+    "roadworthiness_status": {
+      "type": "string",
+      "description": "Roadworthiness verification status",
+      "enum": [
+        "valid",
+        "expired",
         "pending",
-        "approved",
-        "rejected"
+        "not_verified"
       ],
       "default": "pending"
     },
-    "luggage_capacity": {
-      "type": "number",
-      "default": 0,
-      "description": "Approximate luggage capacity in large bags"
-    },
-    "insurance_info": {
+
+    "roadworthiness_expiry": {
       "type": "string",
-      "description": "Insurance provider and policy reference"
+      "description": "Roadworthiness expiry date"
     },
-    "permit_info": {
+
+    "license_status": {
       "type": "string",
-      "description": "Operating permit / road transportation permit reference"
+      "description": "Vehicle licence status",
+      "enum": [
+        "valid",
+        "expired",
+        "pending",
+        "not_verified"
+      ],
+      "default": "pending"
+    },
+
+    "license_expiry": {
+      "type": "string",
+      "description": "Vehicle licence expiry date"
+    },
+
+    "operator_card_status": {
+      "type": "string",
+      "description": "Operator card status",
+      "enum": [
+        "valid",
+        "expired",
+        "pending",
+        "not_verified"
+      ],
+      "default": "pending"
+    },
+
+    "operator_card_expiry": {
+      "type": "string",
+      "description": "Operator card expiry date"
+    },
+
+    "exterior_photo": {
+      "type": "string",
+      "description": "URL of vehicle exterior photo"
+    },
+
+    "interior_photo": {
+      "type": "string",
+      "description": "URL of vehicle interior photo"
+    },
+
+    "additional_photos": {
+      "type": "array",
+      "description": "Additional vehicle photo URLs",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "verification_status": {
+      "type": "string",
+      "description": "Treba vehicle verification status",
+      "enum": [
+        "pending",
+        "verified",
+        "rejected",
+        "expired"
+      ],
+      "default": "pending"
+    },
+
+    "verified_by": {
+      "type": "string",
+      "description": "ID of the administrator who verified the vehicle"
+    },
+
+    "verified_at": {
+      "type": "string",
+      "description": "Date/time vehicle was verified"
+    },
+
+    "active": {
+      "type": "boolean",
+      "description": "Whether this vehicle is currently active",
+      "default": true
     }
   },
+
   "required": [
+    "driver_id",
     "registration_number",
-    "make",
-    "model"
-  ],
-  "rls": {
-    "read": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+    "seating_capacity",
+    "verification_status"
+  ]
 }

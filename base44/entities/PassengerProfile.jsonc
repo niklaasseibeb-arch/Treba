@@ -1,149 +1,55 @@
 {
-  "name": "PassengerProfile",
+  "name": "User",
   "type": "object",
   "properties": {
-    "user_id": {
+    "role": {
       "type": "string",
-      "description": "Reference to the User this profile belongs to"
+      "description": "Base44 system role",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user"
     },
+
+    "app_role": {
+      "type": "string",
+      "description": "Treba application role",
+      "enum": [
+        "passenger",
+        "driver"
+      ]
+    },
+
     "full_name": {
-      "type": "string"
-    },
-    "phone": {
-      "type": "string"
-    },
-    "profile_info": {
       "type": "string",
-      "description": "Optional additional profile information"
+      "description": "User's full name"
     },
+
+    "phone": {
+      "type": "string",
+      "description": "User's mobile phone number"
+    },
+
     "account_status": {
       "type": "string",
+      "description": "Treba account status",
       "enum": [
         "active",
-        "suspended",
-        "pending"
+        "pending",
+        "suspended"
       ],
       "default": "active"
     },
-    "preferred_contact_method": {
-      "type": "string",
-      "enum": [
-        "sms",
-        "whatsapp",
-        "phone_call",
-        "email"
-      ],
-      "default": "sms"
-    },
-    "emergency_contact_name": {
-      "type": "string"
-    },
-    "emergency_contact_phone": {
-      "type": "string"
-    },
-    "profile_photo_url": {
-      "type": "string"
-    },
-    "phone_verified": {
+
+    "profile_completion": {
       "type": "boolean",
+      "description": "Whether the user's Treba profile has been completed",
       "default": false
-    },
-    "no_show_count": {
-      "type": "number",
-      "default": 0
-    },
-    "cancellation_count": {
-      "type": "number",
-      "default": 0
-    },
-    "completed_trips_count": {
-      "type": "number",
-      "default": 0
-    },
-    "reliability_score": {
-      "type": "number",
-      "default": 100
-    },
-    "cash_no_show_count": {
-      "type": "number",
-      "default": 0,
-      "description": "Number of cash no-shows (missed cash payment/check-in deadlines)"
-    },
-    "cash_restricted": {
-      "type": "boolean",
-      "default": false,
-      "description": "If true, the passenger may not use cash payment"
-    },
-    "requires_digital_payment": {
-      "type": "boolean",
-      "default": false,
-      "description": "If true, the passenger must pay digitally"
-    },
-    "account_review": {
-      "type": "boolean",
-      "default": false,
-      "description": "If true, the passenger account is flagged for admin review"
-    },
-    "payment_methods": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "method_type": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "is_default": {
-            "type": "boolean"
-          }
-        }
-      }
     }
   },
+
   "required": [
-    "full_name"
-  ],
-  "rls": {
-    "read": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+    "role"
+  ]
 }

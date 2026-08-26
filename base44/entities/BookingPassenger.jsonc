@@ -1,0 +1,95 @@
+{
+  "name": "BookingPassenger",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string"
+    },
+
+    "passenger_id": {
+      "type": "string"
+    },
+
+    "booked_by_user_id": {
+      "type": "string"
+    },
+
+    "full_name": {
+      "type": "string"
+    },
+
+    "phone": {
+      "type": "string"
+    },
+
+    "email": {
+      "type": "string"
+    },
+
+    "passenger_type": {
+      "type": "string",
+      "enum": [
+        "self",
+        "other",
+        "group_member"
+      ],
+      "default": "self"
+    },
+
+    "seat_count": {
+      "type": "number",
+      "default": 1
+    },
+
+    "pickup_location": {
+      "type": "string"
+    },
+
+    "dropoff_location": {
+      "type": "string"
+    },
+
+    "luggage_small_bags": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_standard_bags": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_large_suitcases": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_oversized_items": {
+      "type": "number",
+      "default": 0
+    },
+
+    "special_notes": {
+      "type": "string"
+    },
+
+    "status": {
+      "type": "string",
+      "enum": [
+        "booked",
+        "cancelled",
+        "completed",
+        "no_show"
+      ],
+      "default": "booked"
+    }
+  },
+
+  "required": [
+    "booking_id",
+    "booked_by_user_id",
+    "full_name",
+    "seat_count",
+    "status"
+  ]
+}

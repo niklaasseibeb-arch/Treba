@@ -6,7 +6,6 @@ import {
   Clock,
   CarFront,
   Users,
-  Wallet,
   History,
   Bell,
   ArrowRight,
@@ -24,8 +23,7 @@ const FLOW = [
   { icon: Shuffle, label: "Allocated" },
   { icon: Handshake, label: "Respond" },
   { icon: Car, label: "Drive" },
-  { icon: Wallet, label: "Payout" },
-];
+  ];
 
 const ENTRY_CARDS = [
   { to: "/app/driver/requests", icon: Inbox, title: "Trip Requests", text: "Review passenger requests Treba has allocated to your routes.", accent: true },
@@ -33,7 +31,6 @@ const ENTRY_CARDS = [
   { to: "/app/driver/availability", icon: Clock, title: "Availability", text: "Set when and where you're available to drive." },
   { to: "/app/driver/vehicle", icon: CarFront, title: "Vehicle", text: "Manage your vehicle details and verification." },
   { to: "/app/driver/passengers", icon: Users, title: "Passengers", text: "View confirmed passengers across your allocated routes." },
-  { to: "/app/driver/earnings", icon: Wallet, title: "Earnings", text: "Track your trip earnings and payouts." },
   { to: "/app/driver/history", icon: History, title: "Trip History", text: "Review your completed trips as a driver." },
 ];
 
