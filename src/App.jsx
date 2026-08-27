@@ -43,6 +43,7 @@ import PassengerRateTrip from "@/pages/passenger/RateTrip";
    DRIVER
 ========================================================= */
 
+import DriverRegistrationSteps from "@/components/driver/DriverRegistrationSteps";
 import DriverDashboard from "@/pages/driver/Dashboard";
 import DriverProfile from "@/pages/driver/Profile";
 import DriverAllocations from "@/pages/driver/Allocations";
@@ -239,6 +240,11 @@ const AuthenticatedApp = () => {
           ================================================= */}
 
           <Route element={<RoleGuard allow="driver" />}>
+
+          <Route
+            path="/app/driver/register"
+            element={<DriverRegistrationSteps />}
+          />
 
             <Route
               path="/app/driver"

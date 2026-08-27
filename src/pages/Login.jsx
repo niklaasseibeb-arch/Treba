@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { base44 } from "@/api/base44Client";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,8 +15,11 @@ import {
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Login() {
+  const { login } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -30,7 +31,8 @@ export default function Login() {
 
     setError("");
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanEmail =
+      email.trim().toLowerCase();
 
     if (!cleanEmail) {
       setError("Email address is required.");
@@ -45,40 +47,86 @@ export default function Login() {
     setLoading(true);
 
     try {
-      console.log("=================================");
+      console.log(
+        "================================="
+      );
       console.log("TREBA LOGIN START");
       console.log("Email:", cleanEmail);
-      console.log("=================================");
-
-      /*
-       * IMPORTANT:
-       *
-       * @base44/sdk 0.8.43 does NOT have:
-       *
-       * base44.auth.login()
-       *
-       * The correct method is:
-       *
-       * base44.auth.loginViaEmailPassword()
-       */
-
-      const loginResult =
-        await base44.auth.loginViaEmailPassword(
-          cleanEmail,
-          password
-        );
-
       console.log(
-        "TREBA LOGIN RESULT:",
-        loginResult
+        "================================="
       );
 
       /*
-       * Retrieve the authenticated Base44 user.
+       * =====================================================
+       * TREBA API LOGIN
+       * =====================================================
+       *
+       * Authentication is now handled by the
+       * Treba Express + PostgreSQL backend.
+       *
+       * Base44 authentication is NOT used here.
+       */
+
+      const response = await fetch(
+        "/api/auth/login",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            email: cleanEmail,
+            password,
+          }),
+        }
+      );
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(
+          "The Treba server returned an invalid response."
+        );
+      }
+
+      console.log(
+        "TREBA LOGIN RESPONSE:",
+        data
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            "Login failed. Please check your email and password."
+        );
+      }
+
+      /*
+       * The Treba API must return a JWT.
+       */
+
+      if (!data?.token) {
+        throw new Error(
+          "Login succeeded but no authentication token was returned."
+        );
+      }
+
+      /*
+       * =====================================================
+       * ESTABLISH TREBA AUTH SESSION
+       * =====================================================
+       *
+       * AuthContext stores the JWT and verifies
+       * the authenticated user through /api/auth/me.
        */
 
       const authenticatedUser =
-        await base44.auth.me();
+        await login(data.token);
 
       console.log(
         "TREBA AUTHENTICATED USER:",
@@ -87,12 +135,14 @@ export default function Login() {
 
       if (!authenticatedUser?.id) {
         throw new Error(
-          "Login completed, but no authenticated user session was found."
+          "Login completed, but no authenticated user was found."
         );
       }
 
       /*
-       * Determine destination.
+       * =====================================================
+       * DESTINATION
+       * =====================================================
        */
 
       const returnTo = safeReturnTo();
@@ -108,8 +158,7 @@ export default function Login() {
       }
 
       /*
-       * Send the user to the correct
-       * Treba dashboard.
+       * Driver dashboard
        */
 
       if (
@@ -121,6 +170,10 @@ export default function Login() {
 
         return;
       }
+
+      /*
+       * Passenger dashboard
+       */
 
       window.location.href =
         "/app/passenger";
@@ -145,28 +198,20 @@ export default function Login() {
       );
 
       console.error(
-        "Status:",
-        err?.status
-      );
-
-      console.error(
-        "Response:",
-        err?.response
-      );
-
-      console.error(
-        "Data:",
-        err?.data
-      );
-
-      console.error(
         "================================="
+      );
+
+      /*
+       * Remove any invalid token that
+       * may have been stored.
+       */
+
+      localStorage.removeItem(
+        "treba_token"
       );
 
       setError(
         err?.message ||
-          err?.response?.data?.message ||
-          err?.data?.message ||
           "Login failed. Please check your email and password."
       );
 
@@ -175,23 +220,21 @@ export default function Login() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    try {
-      base44.auth.loginWithProvider(
-        "google",
-        safeReturnTo()
-      );
-    } catch (err) {
-      console.error(
-        "TREBA GOOGLE LOGIN FAILED:",
-        err
-      );
+  /*
+   * =========================================================
+   * GOOGLE LOGIN
+   * =========================================================
+   *
+   * Google authentication is left untouched for now.
+   *
+   * We are first getting Treba email/password
+   * authentication completely working.
+   */
 
-      setError(
-        err?.message ||
-          "Unable to start Google login."
-      );
-    }
+  const handleGoogleLogin = () => {
+    setError(
+      "Google login will be connected after Treba email/password authentication is complete."
+    );
   };
 
   return (

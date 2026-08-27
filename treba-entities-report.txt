@@ -1,0 +1,3604 @@
+﻿
+============================================================
+Allocation.jsonc
+============================================================
+{
+  "name": "Allocation",
+  "type": "object",
+
+  "properties": {
+    "trip_request_id": {
+      "type": "string"
+    },
+
+    "route_id": {
+      "type": "string"
+    },
+
+    "route_code": {
+      "type": "string"
+    },
+
+    "origin": {
+      "type": "string",
+      "description": "Origin town"
+    },
+
+    "destination": {
+      "type": "string",
+      "description": "Destination town"
+    },
+
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+
+    "departure_time": {
+      "type": "string"
+    },
+
+    "timeslot": {
+      "type": "string"
+    },
+
+    "driver_id": {
+      "type": "string",
+      "description": "DriverProfile ID"
+    },
+
+    "driver_name": {
+      "type": "string"
+    },
+
+    "driver_user_id": {
+      "type": "string",
+      "description": "User ID belonging to the driver"
+    },
+
+    "vehicle_id": {
+      "type": "string"
+    },
+
+    "vehicle_label": {
+      "type": "string"
+    },
+
+    "total_seats": {
+      "type": "number",
+      "default": 0
+    },
+
+    "booked_seats": {
+      "type": "number",
+      "default": 0
+    },
+
+    "available_seats": {
+      "type": "number",
+      "default": 0
+    },
+
+    "status": {
+      "type": "string",
+      "enum": [
+        "awaiting_confirmation",
+        "confirmed",
+        "active",
+        "full",
+        "completed",
+        "declined",
+        "cancelled",
+        "reassigned"
+      ],
+      "default": "awaiting_confirmation"
+    },
+
+    "queue_position": {
+      "type": "number",
+      "default": 1
+    },
+
+    "is_visible_to_passengers": {
+      "type": "boolean",
+      "default": false
+    },
+
+    "passenger_booking_open": {
+      "type": "boolean",
+      "default": false
+    },
+
+    "pickup_location": {
+      "type": "string",
+      "description": "Default or scheduled pickup location"
+    },
+
+    "dropoff_location": {
+      "type": "string",
+      "description": "Default or scheduled drop-off location"
+    },
+
+    "driver_fare": {
+      "type": "number",
+      "default": 0
+    },
+
+    "pickup_charge": {
+      "type": "number",
+      "default": 0
+    },
+
+    "dropoff_charge": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_charge": {
+      "type": "number",
+      "default": 0
+    },
+
+    "total_fare": {
+      "type": "number",
+      "default": 0
+    },
+
+    "fare_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "offered",
+        "agreed"
+      ],
+      "default": "pending"
+    },
+
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "direct_to_driver"
+      ],
+      "default": "direct_to_driver"
+    },
+
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "not_due",
+        "pending",
+        "paid_to_driver",
+        "confirmed"
+      ],
+      "default": "not_due"
+    },
+
+    "declined_driver_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+
+    "replacement_for_allocation_id": {
+      "type": "string"
+    },
+
+    "replaced_at": {
+      "type": "string"
+    },
+
+    "created_at": {
+      "type": "string"
+    },
+
+    "updated_at": {
+      "type": "string"
+    }
+  },
+
+  "required": [
+    "route_id",
+    "origin",
+    "destination",
+    "date",
+    "departure_time",
+    "driver_id",
+    "total_seats",
+    "available_seats",
+    "status"
+  ]
+}
+
+============================================================
+AuditLog.jsonc
+============================================================
+{
+  "name": "AuditLog",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_role": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "entity_type": {
+      "type": "string"
+    },
+    "record_id": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "action",
+    "entity_type"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+Booking.jsonc
+============================================================
+{
+  "name": "Booking",
+  "type": "object",
+  "properties": {
+    "allocation_id": {
+      "type": "string"
+    },
+
+    "trip_request_id": {
+      "type": "string"
+    },
+
+    "passenger_id": {
+      "type": "string"
+    },
+
+    "passenger_name": {
+      "type": "string"
+    },
+
+    "booked_by_passenger_id": {
+      "type": "string"
+    },
+
+    "booked_by_passenger_name": {
+      "type": "string"
+    },
+
+    "traveller_name": {
+      "type": "string"
+    },
+
+    "traveller_phone": {
+      "type": "string"
+    },
+
+    "booking_reference": {
+      "type": "string"
+    },
+
+  
+    "booking_type": {
+      "type": "string",
+      "enum": [
+        "single",
+        "group",
+        "proxy",
+        "recurring"
+      ],
+      "default": "single"
+    },
+
+    "booked_for_someone_else": {
+      "type": "boolean",
+      "default": false
+    },
+
+    "recurring_booking_id": {
+      "type": "string"
+    },
+
+    "travel_date": {
+      "type": "string"
+    },
+
+    "departure_time": {
+      "type": "string"
+    },
+
+    "origin": {
+      "type": "string"
+    },
+
+    "destination": {
+      "type": "string"
+    },
+
+    "pickup_location": {
+      "type": "string"
+    },
+
+    "dropoff_location": {
+      "type": "string"
+    },
+
+    "driver_id": {
+      "type": "string"
+    },
+
+    "driver_name": {
+      "type": "string"
+    },
+
+    "vehicle_id": {
+      "type": "string"
+    },
+
+    "number_of_seats": {
+      "type": "number",
+      "default": 1
+    },
+
+    "driver_fare": {
+      "type": "number",
+      "default": 0
+    },
+
+    "pickup_charge": {
+      "type": "number",
+      "default": 0
+    },
+
+    "dropoff_charge": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_charge": {
+      "type": "number",
+      "default": 0
+    },
+
+    "total_fare": {
+      "type": "number",
+      "default": 0
+    },
+
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "direct_to_driver"
+      ],
+      "default": "direct_to_driver"
+    },
+
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid_to_driver",
+        "confirmed",
+        "disputed"
+      ],
+      "default": "pending"
+    },
+
+    "booking_status": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "cancelled",
+        "completed",
+        "no_show",
+        "driver_no_show"
+      ],
+      "default": "confirmed"
+    },
+
+    "fare_received_by_driver": {
+      "type": "boolean",
+      "default": false
+    },
+
+    "fare_received_at": {
+      "type": "string"
+    },
+
+    "created_at": {
+      "type": "string"
+    },
+
+    "updated_at": {
+      "type": "string"
+    }
+  },
+
+  "required": [
+    "allocation_id",
+    "passenger_id",
+    "number_of_seats",
+    "travel_date",
+    "booking_status"
+  ]
+}
+
+============================================================
+BookingPassenger.jsonc
+============================================================
+{
+  "name": "BookingPassenger",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string"
+    },
+
+    "passenger_id": {
+      "type": "string"
+    },
+
+    "booked_by_user_id": {
+      "type": "string"
+    },
+
+    "full_name": {
+      "type": "string"
+    },
+
+    "phone": {
+      "type": "string"
+    },
+
+    "email": {
+      "type": "string"
+    },
+
+    "passenger_type": {
+      "type": "string",
+      "enum": [
+        "self",
+        "other",
+        "group_member"
+      ],
+      "default": "self"
+    },
+
+    "seat_count": {
+      "type": "number",
+      "default": 1
+    },
+
+    "pickup_location": {
+      "type": "string"
+    },
+
+    "dropoff_location": {
+      "type": "string"
+    },
+
+    "luggage_small_bags": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_standard_bags": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_large_suitcases": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_oversized_items": {
+      "type": "number",
+      "default": 0
+    },
+
+    "special_notes": {
+      "type": "string"
+    },
+
+    "status": {
+      "type": "string",
+      "enum": [
+        "booked",
+        "cancelled",
+        "completed",
+        "no_show"
+      ],
+      "default": "booked"
+    }
+  },
+
+  "required": [
+    "booking_id",
+    "booked_by_user_id",
+    "full_name",
+    "seat_count",
+    "status"
+  ]
+}
+
+============================================================
+BookingTransferRequest.jsonc
+============================================================
+{
+  "name": "BookingTransferRequest",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string",
+      "description": "Reference to the Booking being transferred"
+    },
+    "trip_request_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string",
+      "description": "User id of the passenger requesting the transfer, for row-level access"
+    },
+    "passenger_name": {
+      "type": "string"
+    },
+    "origin": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "departure_time": {
+      "type": "string",
+      "description": "Departure time of the passenger's current service"
+    },
+    "current_allocation_id": {
+      "type": "string"
+    },
+    "current_driver_id": {
+      "type": "string"
+    },
+    "current_driver_name": {
+      "type": "string"
+    },
+    "target_allocation_id": {
+      "type": "string",
+      "description": "Reference to the Allocation the passenger wants to transfer to"
+    },
+    "target_driver_id": {
+      "type": "string"
+    },
+    "target_driver_user_id": {
+      "type": "string",
+      "description": "User id of the receiving driver, for row-level access"
+    },
+    "target_driver_name": {
+      "type": "string"
+    },
+    "target_departure_time": {
+      "type": "string"
+    },
+    "target_vehicle_label": {
+      "type": "string"
+    },
+    "number_of_seats": {
+      "type": "number",
+      "default": 1
+    },
+    "fare_amount": {
+      "type": "number",
+      "description": "Snapshot of the agreed fare, preserved across the transfer. Never recalculated by Treba."
+    },
+    "transfer_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined",
+        "expired",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "responded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decline_reason": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "booking_id",
+    "passenger_id",
+    "target_allocation_id",
+    "target_driver_user_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "data.target_driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+CashPaymentConfig.jsonc
+============================================================
+{
+  "name": "ContactAttempt",
+  "type": "object",
+  "properties": {
+    "no_show_report_id": {
+      "type": "string"
+    },
+    "booking_id": {
+      "type": "string"
+    },
+    "trip_request_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "attempt_type": {
+      "type": "string",
+      "enum": [
+        "call",
+        "message"
+      ]
+    },
+    "attempted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "no_answer",
+        "reached",
+        "failed"
+      ]
+    },
+    "note": {
+      "type": "string"
+    },
+    "driver_location": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "booking_id",
+    "attempt_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+ContactAttempts.jsonc
+============================================================
+{
+  "name": "ContactAttempt",
+  "type": "object",
+  "properties": {
+    "no_show_report_id": {
+      "type": "string"
+    },
+    "booking_id": {
+      "type": "string"
+    },
+    "trip_request_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "attempt_type": {
+      "type": "string",
+      "enum": [
+        "call",
+        "message"
+      ]
+    },
+    "attempted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "no_answer",
+        "reached",
+        "failed"
+      ]
+    },
+    "note": {
+      "type": "string"
+    },
+    "driver_location": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "booking_id",
+    "attempt_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+DriverNoShowPolicy.jsonc
+============================================================
+{
+  "name": "DriverNoShowPolicy",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "grace_minutes": {
+      "type": "number",
+      "default": 15,
+      "description": "Minutes after scheduled departure the passenger must wait before reporting a driver no-show"
+    },
+    "dispute_window_hours": {
+      "type": "number",
+      "default": 48,
+      "description": "Hours after a driver no-show is reported during which the driver may respond"
+    },
+    "refund_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether passenger protection refunds are permitted under this policy. Treba never auto-refunds."
+    },
+    "refund_percentage": {
+      "type": "number",
+      "default": 100,
+      "description": "Admin-configured passenger refund percentage. Never hard-coded; set per policy."
+    },
+    "charge_driver": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, the driver is penalised/forfeits the fare under this policy"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+DriverNoShowReport.jsonc
+============================================================
+{
+  "name": "DriverNoShowReport",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string"
+    },
+    "trip_request_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "passenger_name": {
+      "type": "string"
+    },
+    "driver_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "allocation_id": {
+      "type": "string",
+      "description": "Scheduled service (Allocation) this no-show occurred on"
+    },
+    "route": {
+      "type": "string",
+      "description": "Origin \u2192 destination label"
+    },
+    "pickup_location": {
+      "type": "string",
+      "description": "Designated pickup point where the passenger waited"
+    },
+    "scheduled_departure": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "grace_minutes": {
+      "type": "number",
+      "default": 15
+    },
+    "reported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "passenger_at_pickup": {
+      "type": "boolean",
+      "default": false
+    },
+    "grace_elapsed": {
+      "type": "boolean",
+      "default": false
+    },
+    "contact_attempted": {
+      "type": "boolean",
+      "default": false
+    },
+    "contact_attempts_count": {
+      "type": "number",
+      "default": 0
+    },
+    "evidence_notes": {
+      "type": "string",
+      "description": "Free-text evidence supplied by the passenger (e.g. waited at rank, driver unreachable)"
+    },
+    "evidence_file_url": {
+      "type": "string",
+      "description": "Optional uploaded evidence file (photo of pickup point, etc.)"
+    },
+    "no_show_status": {
+      "type": "string",
+      "enum": [
+        "reported",
+        "under_review",
+        "upheld",
+        "overturned",
+        "resolved"
+      ],
+      "default": "reported"
+    },
+    "driver_response": {
+      "type": "string",
+      "description": "Optional response from the driver during the dispute window"
+    },
+    "review_decision": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "upheld",
+        "overturned"
+      ],
+      "default": "pending"
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "financial_outcome": {
+      "type": "string",
+      "description": "Description of the financial outcome applied per the passenger protection policy. Treba never auto-refunds."
+    },
+    "refund_amount": {
+      "type": "number",
+      "description": "Refund amount an admin may apply per policy. Never auto-processed."
+    }
+  },
+  "required": [
+    "booking_id",
+    "passenger_id",
+    "driver_user_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+DriverOffer.jsonc
+============================================================
+{
+  "name": "DriverOffer",
+  "type": "object",
+  "properties": {
+    "trip_request_id": {
+      "type": "string",
+      "description": "ID of the passenger trip request"
+    },
+
+    "driver_id": {
+      "type": "string",
+      "description": "ID of the driver making the offer"
+    },
+
+    "route_id": {
+      "type": "string",
+      "description": "ID of the route associated with the offer"
+    },
+
+    "origin": {
+      "type": "string",
+      "description": "Origin town"
+    },
+
+    "destination": {
+      "type": "string",
+      "description": "Destination town"
+    },
+
+    "travel_date": {
+      "type": "string",
+      "description": "Requested travel date"
+    },
+
+    "departure_time": {
+      "type": "string",
+      "description": "Scheduled or proposed departure time"
+    },
+
+    "available_seats": {
+      "type": "number",
+      "description": "Number of passenger seats the driver can offer for this trip",
+      "default": 0
+    },
+
+    "fare_offer": {
+      "type": "number",
+      "description": "Fare offered by the driver per passenger"
+    },
+
+    "pickup_fee": {
+      "type": "number",
+      "description": "Additional pickup charge, if applicable",
+      "default": 0
+    },
+
+    "dropoff_fee": {
+      "type": "number",
+      "description": "Additional drop-off charge, if applicable",
+      "default": 0
+    },
+
+    "luggage_fee": {
+      "type": "number",
+      "description": "Additional luggage charge, if applicable",
+      "default": 0
+    },
+
+    "total_fare": {
+      "type": "number",
+      "description": "Total passenger fare including applicable additional charges"
+    },
+
+    "payment_method": {
+      "type": "string",
+      "description": "How the passenger pays the driver",
+      "enum": [
+        "direct_to_driver"
+      ],
+      "default": "direct_to_driver"
+    },
+
+    "fare_status": {
+      "type": "string",
+      "description": "Status of the fare offer",
+      "enum": [
+        "offered",
+        "accepted",
+        "rejected",
+        "expired",
+        "cancelled"
+      ],
+      "default": "offered"
+    },
+
+    "offer_status": {
+      "type": "string",
+      "description": "Current status of the driver offer",
+      "enum": [
+        "offered",
+        "available",
+        "declined",
+        "expired",
+        "selected",
+        "cancelled"
+      ],
+      "default": "offered"
+    },
+
+    "max_offers": {
+      "type": "number",
+      "description": "Maximum number of driver opportunities Treba may create for this request",
+      "default": 5
+    },
+
+    "passenger_seats_requested": {
+      "type": "number",
+      "description": "Number of seats requested by the passenger"
+    },
+
+    "seats_reserved": {
+      "type": "number",
+      "description": "Number of seats currently reserved from this offer",
+      "default": 0
+    },
+
+    "vehicle_id": {
+      "type": "string",
+      "description": "Vehicle associated with the driver offer"
+    },
+
+    "driver_rating": {
+      "type": "number",
+      "description": "Driver rating at the time of the offer"
+    },
+
+    "driver_rating_count": {
+      "type": "number",
+      "description": "Number of ratings used for the driver's rating"
+    },
+
+    "responded_at": {
+      "type": "string",
+      "description": "Timestamp when the driver responded to the request"
+    },
+
+    "selected_at": {
+      "type": "string",
+      "description": "Timestamp when the offer was selected"
+    },
+
+    "expires_at": {
+      "type": "string",
+      "description": "Timestamp after which the offer expires"
+    }
+  },
+
+  "required": [
+    "trip_request_id",
+    "driver_id",
+    "origin",
+    "destination",
+    "travel_date",
+    "available_seats",
+    "fare_offer",
+    "offer_status"
+  ]
+}
+
+============================================================
+DriverProfile.jsonc
+============================================================
+{
+  "name": "DriverProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID of the authenticated Treba user"
+    },
+
+    "full_name": {
+      "type": "string",
+      "description": "Driver's full name"
+    },
+
+    "phone": {
+      "type": "string",
+      "description": "Driver's mobile phone number"
+    },
+
+    "profile_photo_url": {
+      "type": "string",
+      "description": "URL of the driver's profile photo"
+    },
+
+    "license_number": {
+      "type": "string",
+      "description": "Driver licence number"
+    },
+
+    "license_expiry": {
+      "type": "string",
+      "description": "Driver licence expiry date"
+    },
+
+    "driving_experience_years": {
+      "type": "number",
+      "description": "Number of years of driving experience",
+      "default": 0
+    },
+
+    "vehicle_id": {
+      "type": "string",
+      "description": "ID of the driver's registered vehicle"
+    },
+
+    "driver_status": {
+      "type": "string",
+      "description": "Driver account status",
+      "enum": [
+        "pending",
+        "active",
+        "suspended",
+        "inactive"
+      ],
+      "default": "pending"
+    },
+
+    "availability_status": {
+      "type": "string",
+      "description": "Driver availability for Treba allocation",
+      "enum": [
+        "available",
+        "unavailable"
+      ],
+      "default": "available"
+    },
+
+    "preferred_routes": {
+      "type": "array",
+      "description": "Town-to-town corridors the driver is willing to operate",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "rating": {
+      "type": "number",
+      "description": "Average passenger rating",
+      "default": 0
+    },
+
+    "rating_count": {
+      "type": "number",
+      "description": "Number of ratings received",
+      "default": 0
+    },
+
+    "trips_completed": {
+      "type": "number",
+      "description": "Number of completed trips",
+      "default": 0
+    },
+
+    "maximum_trips_per_day": {
+      "type": "number",
+      "description": "Maximum trips allowed per day",
+      "default": 2
+    },
+
+    "minimum_rest_hours": {
+      "type": "number",
+      "description": "Minimum rest hours used for scheduling",
+      "default": 8
+    },
+
+    "last_trip_end": {
+      "type": "string",
+      "description": "Date and time the driver's last trip ended"
+    },
+
+    "scheduling_score": {
+      "type": "number",
+      "description": "Score used by Treba allocation",
+      "default": 0
+    },
+
+    "fatigue_score": {
+      "type": "number",
+      "description": "Driver fatigue score",
+      "default": 0
+    },
+
+    "fairness_score": {
+      "type": "number",
+      "description": "Driver fairness score used in allocation",
+      "default": 0
+    }
+  },
+
+  "required": [
+    "user_id",
+    "full_name",
+    "phone",
+    "driver_status",
+    "availability_status"
+  ]
+}
+
+============================================================
+DriverSubscription.jsonc
+============================================================
+{
+  "name": "DriverSubscription",
+  "type": "object",
+  "properties": {
+    "driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile"
+    },
+    "driver_user_id": {
+      "type": "string",
+      "description": "User id of the driver, for row-level access"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "plan_id": {
+      "type": "string",
+      "description": "Reference to the DriverSubscriptionPlan"
+    },
+    "plan_code": {
+      "type": "string"
+    },
+    "plan_name": {
+      "type": "string"
+    },
+    "price": {
+      "type": "number",
+      "description": "Snapshot of plan price at subscription time"
+    },
+    "currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "trip_allowance": {
+      "type": "number",
+      "default": 0,
+      "description": "Snapshot of the plan trip allowance"
+    },
+    "is_unlimited": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_trial": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when this subscription is a 60-day free trial. A driver may only ever have one trial."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "trial",
+        "active",
+        "expiring",
+        "expired",
+        "suspended",
+        "cancelled"
+      ],
+      "default": "active"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "renewal_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Next renewal date (paid subscriptions)"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trial end date (free trials)"
+    },
+    "trips_used": {
+      "type": "number",
+      "default": 0,
+      "description": "Completed trips counted in this subscription period. For trials this is the number of trips completed during the trial."
+    },
+    "auto_renew": {
+      "type": "boolean",
+      "default": false
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reminders_sent": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": [],
+      "description": "Trial reminder thresholds (days remaining) already notified."
+    },
+    "payment_reference": {
+      "type": "string",
+      "description": "Reference for the subscription payment. Treba collects only driver subscription payments \u2014 never passenger fares."
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "driver_user_id",
+    "plan_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+DriverSubscriptionPlan.jsonc
+============================================================
+{
+  "name": "DriverSubscriptionPlan",
+  "type": "object",
+  "properties": {
+    "plan_code": {
+      "type": "string",
+      "enum": [
+        "starter",
+        "standard",
+        "premium",
+        "trial"
+      ],
+      "description": "Canonical plan identifier. 'trial' is the 60-day free trial plan, not selectable by drivers."
+    },
+    "name": {
+      "type": "string"
+    },
+    "price": {
+      "type": "number",
+      "description": "Monthly subscription price"
+    },
+    "currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "trip_allowance": {
+      "type": "number",
+      "default": 0,
+      "description": "Maximum completed trips per subscription month. Ignored when is_unlimited is true."
+    },
+    "is_unlimited": {
+      "type": "boolean",
+      "default": false,
+      "description": "True for plans with no trip cap (e.g. Premium, Trial)"
+    },
+    "billing_cycle": {
+      "type": "string",
+      "enum": [
+        "monthly"
+      ],
+      "default": "monthly"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "description": {
+      "type": "string"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name",
+    "price"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+DriverSwapRequest.jsonc
+============================================================
+
+============================================================
+FareOffer.jsonc
+============================================================
+{
+  "name": "FareOffer",
+  "type": "object",
+  "properties": {
+    "trip_request_id": {
+      "type": "string",
+      "description": "Reference to the TripRequest this offer belongs to"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Offered fare amount. Never estimated or suggested by Treba."
+    },
+    "currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "offered_by": {
+      "type": "string",
+      "enum": [
+        "passenger",
+        "driver"
+      ]
+    },
+    "offered_by_user_id": {
+      "type": "string"
+    },
+    "offer_status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "accepted",
+        "countered",
+        "declined",
+        "superseded"
+      ],
+      "default": "open"
+    },
+    "previous_offer_id": {
+      "type": "string",
+      "description": "Reference to the prior offer this one counters"
+    },
+    "response": {
+      "type": "string",
+      "enum": [
+        "accept",
+        "counter",
+        "decline"
+      ],
+      "description": "Response action taken on this offer by the other party"
+    },
+    "response_by": {
+      "type": "string",
+      "enum": [
+        "passenger",
+        "driver"
+      ]
+    },
+    "response_by_user_id": {
+      "type": "string"
+    },
+    "response_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_request_id",
+    "amount",
+    "offered_by"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+NoShowPolicy.jsonc
+============================================================
+{
+  "name": "NoShowPolicy",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "grace_minutes": {
+      "type": "number",
+      "default": 10,
+      "description": "Minutes after scheduled departure the driver must wait before reporting a no-show"
+    },
+    "dispute_window_hours": {
+      "type": "number",
+      "default": 48,
+      "description": "Hours after a no-show is reported during which a passenger may dispute"
+    },
+    "refund_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether any refund is permitted under this policy. Treba never auto-refunds."
+    },
+    "refund_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Admin-configured refund percentage. Never hard-coded; set per policy."
+    },
+    "charge_passenger": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, the passenger is charged/forfeits the fare under this no-show policy"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+NoShowReport.jsonc
+============================================================
+{
+  "name": "NoShowReport",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string"
+    },
+    "trip_request_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "passenger_name": {
+      "type": "string"
+    },
+    "driver_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "allocation_id": {
+      "type": "string",
+      "description": "Scheduled service (Allocation) this no-show occurred on"
+    },
+    "route": {
+      "type": "string",
+      "description": "Origin \u2192 destination label"
+    },
+    "scheduled_departure": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "grace_minutes": {
+      "type": "number",
+      "default": 10
+    },
+    "reported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "driver_location": {
+      "type": "string",
+      "description": "Driver location where technically available (free text or coordinates)"
+    },
+    "driver_at_pickup": {
+      "type": "boolean",
+      "default": false
+    },
+    "grace_elapsed": {
+      "type": "boolean",
+      "default": false
+    },
+    "contact_attempted": {
+      "type": "boolean",
+      "default": false
+    },
+    "contact_attempts_count": {
+      "type": "number",
+      "default": 0
+    },
+    "no_show_status": {
+      "type": "string",
+      "enum": [
+        "reported",
+        "disputed",
+        "upheld",
+        "overturned",
+        "resolved"
+      ],
+      "default": "reported"
+    },
+    "dispute_reason": {
+      "type": "string"
+    },
+    "disputed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "review_decision": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "upheld",
+        "overturned"
+      ],
+      "default": "pending"
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "financial_outcome": {
+      "type": "string",
+      "description": "Description of the financial outcome applied per the no-show policy. Treba never auto-refunds."
+    },
+    "refund_amount": {
+      "type": "number",
+      "description": "Refund amount an admin may apply per policy. Never auto-processed."
+    }
+  },
+  "required": [
+    "booking_id",
+    "passenger_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+Notification.jsonc
+============================================================
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User this notification is addressed to"
+    },
+    "notification_type": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "related_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "message"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
+
+============================================================
+PassengerContactAttempt.jsonc
+============================================================
+{
+  "name": "PassengerContactAttempt",
+  "type": "object",
+  "properties": {
+    "driver_no_show_report_id": {
+      "type": "string"
+    },
+    "booking_id": {
+      "type": "string"
+    },
+    "trip_request_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "attempt_type": {
+      "type": "string",
+      "enum": [
+        "call",
+        "message"
+      ]
+    },
+    "attempted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "no_answer",
+        "reached",
+        "failed"
+      ]
+    },
+    "note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_request_id",
+    "attempt_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.passenger_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+PassengerProfile.jsonc
+============================================================
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "description": "Base44 system role",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user"
+    },
+
+    "app_role": {
+      "type": "string",
+      "description": "Treba application role",
+      "enum": [
+        "passenger",
+        "driver"
+      ]
+    },
+
+    "full_name": {
+      "type": "string",
+      "description": "User's full name"
+    },
+
+    "phone": {
+      "type": "string",
+      "description": "User's mobile phone number"
+    },
+
+    "account_status": {
+      "type": "string",
+      "description": "Treba account status",
+      "enum": [
+        "active",
+        "pending",
+        "suspended"
+      ],
+      "default": "active"
+    },
+
+    "profile_completion": {
+      "type": "boolean",
+      "description": "Whether the user's Treba profile has been completed",
+      "default": false
+    }
+  },
+
+  "required": [
+    "role"
+  ]
+}
+
+============================================================
+Rating.jsonc
+============================================================
+{
+  "name": "Rating",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string"
+    },
+    "trip_id": {
+      "type": "string"
+    },
+    "reviewer_id": {
+      "type": "string"
+    },
+    "reviewee_id": {
+      "type": "string"
+    },
+    "reviewer_role": {
+      "type": "string",
+      "enum": [
+        "passenger",
+        "driver"
+      ]
+    },
+    "rating_score": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "reviewee_id",
+    "rating_score"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
+
+============================================================
+RecurringBooking.jsonc
+============================================================
+{
+  "name": "RecurringBooking",
+  "type": "object",
+  "properties": {
+    "passenger_id": {
+      "type": "string"
+    },
+
+    "route_id": {
+      "type": "string"
+    },
+
+    "origin": {
+      "type": "string"
+    },
+
+    "destination": {
+      "type": "string"
+    },
+
+    "pickup_location": {
+      "type": "string"
+    },
+
+    "dropoff_location": {
+      "type": "string"
+    },
+
+    "days_of_week": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "preferred_time_from": {
+      "type": "string"
+    },
+
+    "preferred_time_to": {
+      "type": "string"
+    },
+
+    "number_of_seats": {
+      "type": "number",
+      "default": 1
+    },
+
+    "start_date": {
+      "type": "string"
+    },
+
+    "end_date": {
+      "type": "string"
+    },
+
+    "luggage_small_bags": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_standard_bags": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_large_suitcases": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_oversized_items": {
+      "type": "number",
+      "default": 0
+    },
+
+    "notes": {
+      "type": "string"
+    },
+
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "cancelled",
+        "completed"
+      ],
+      "default": "active"
+    },
+
+    "last_generated_date": {
+      "type": "string"
+    }
+  },
+
+  "required": [
+    "passenger_id",
+    "origin",
+    "destination",
+    "days_of_week",
+    "preferred_time_from",
+    "preferred_time_to",
+    "number_of_seats",
+    "start_date",
+    "status"
+  ]
+}
+
+============================================================
+Route.jsonc
+============================================================
+{
+  "name": "Route",
+  "type": "object",
+  "properties": {
+    "route_code": {
+      "type": "string"
+    },
+
+    "origin_town": {
+      "type": "string"
+    },
+
+    "destination_town": {
+      "type": "string"
+    },
+
+    "distance_km": {
+      "type": "number"
+    },
+
+    "approximate_duration_minutes": {
+      "type": "number"
+    },
+
+    "standard_pickup_points": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "standard_drop_off_points": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "default_timeslots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+
+    "route_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    }
+  },
+
+  "required": [
+    "origin_town",
+    "destination_town",
+    "is_active",
+    "route_status"
+  ]
+}
+
+============================================================
+SubscriptionInvoice.jsonc
+============================================================
+{
+  "name": "SubscriptionInvoice",
+  "type": "object",
+  "properties": {
+    "driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile"
+    },
+    "driver_user_id": {
+      "type": "string",
+      "description": "User id of the driver, for row-level access"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "subscription_id": {
+      "type": "string",
+      "description": "Reference to the DriverSubscription activated by this invoice"
+    },
+    "plan_id": {
+      "type": "string",
+      "description": "Reference to the DriverSubscriptionPlan"
+    },
+    "plan_code": {
+      "type": "string"
+    },
+    "plan_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Subscription amount due for the period"
+    },
+    "currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Subscription period start date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Subscription period end date (renewal date)"
+    },
+    "invoice_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "failed",
+        "cancelled",
+        "refunded"
+      ],
+      "default": "pending"
+    },
+    "payment_id": {
+      "type": "string",
+      "description": "Reference to the SubscriptionPayment that settled this invoice"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "driver_user_id",
+    "plan_id",
+    "amount"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+SubscriptionPayment.jsonc
+============================================================
+{
+  "name": "SubscriptionPayment",
+  "type": "object",
+  "properties": {
+    "driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile"
+    },
+    "driver_user_id": {
+      "type": "string",
+      "description": "User id of the driver, for row-level access"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "invoice_id": {
+      "type": "string",
+      "description": "Reference to the SubscriptionInvoice this payment settles"
+    },
+    "subscription_id": {
+      "type": "string",
+      "description": "Reference to the DriverSubscription activated by this payment"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "plan_code": {
+      "type": "string"
+    },
+    "plan_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Subscription payment amount"
+    },
+    "currency": {
+      "type": "string",
+      "default": "NAD"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_card",
+        "mobile_wallet",
+        "pay2cell",
+        "other_digital"
+      ],
+      "description": "Category of the payment method used. Cash is not accepted for subscriptions."
+    },
+    "provider_code": {
+      "type": "string",
+      "description": "Code of the configured PaymentProvider used"
+    },
+    "provider_name": {
+      "type": "string"
+    },
+    "provider_intent_id": {
+      "type": "string",
+      "description": "Provider-side intent/transaction id (e.g. a Stripe PaymentIntent id). Never stores PIN, password or OTP."
+    },
+    "payment_reference": {
+      "type": "string",
+      "description": "Treba transaction reference"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "successful",
+        "failed",
+        "cancelled",
+        "refunded"
+      ],
+      "default": "pending"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "renewal_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Subscription renewal date granted by this payment"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failure_reason": {
+      "type": "string"
+    },
+    "refunded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "refund_amount": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "driver_user_id",
+    "invoice_id",
+    "amount"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+TrialPolicy.jsonc
+============================================================
+{
+  "name": "TrialPolicy",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "trial_duration_days": {
+      "type": "number",
+      "default": 60,
+      "description": "Length of the driver free trial in calendar days."
+    },
+    "reminder_days": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": [
+        30,
+        14,
+        7,
+        3,
+        1
+      ],
+      "description": "Days-remaining thresholds at which the driver is notified."
+    },
+    "transition_policy": {
+      "type": "string",
+      "enum": [
+        "honor_existing_bookings",
+        "release_bookings"
+      ],
+      "default": "honor_existing_bookings",
+      "description": "How existing confirmed bookings are handled when a trial expires."
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+Trip.jsonc
+============================================================
+{
+  "name": "Trip",
+  "type": "object",
+  "properties": {
+    "driver_id": {
+      "type": "string",
+      "description": "Reference to the DriverProfile operating this trip"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "vehicle_id": {
+      "type": "string"
+    },
+    "origin": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "departure_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "departure_time": {
+      "type": "string"
+    },
+    "total_seats": {
+      "type": "number"
+    },
+    "available_seats": {
+      "type": "number"
+    },
+    "fare": {
+      "type": "number"
+    },
+    "trip_status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "departed",
+        "completed",
+        "cancelled"
+      ],
+      "default": "scheduled"
+    }
+  },
+  "required": [
+    "origin",
+    "destination",
+    "departure_date",
+    "departure_time",
+    "fare"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
+
+============================================================
+TripOperation.jsonc
+============================================================
+{
+  "name": "TripOperation",
+  "type": "object",
+  "properties": {
+    "allocation_id": {
+      "type": "string",
+      "description": "Reference to the scheduled Allocation this operation runs"
+    },
+    "driver_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "vehicle_id": {
+      "type": "string"
+    },
+    "vehicle_label": {
+      "type": "string"
+    },
+    "route": {
+      "type": "string",
+      "description": "Origin \u2192 destination label"
+    },
+    "origin": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "departure_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "departure_time": {
+      "type": "string"
+    },
+    "total_seats": {
+      "type": "number",
+      "default": 0
+    },
+    "manifest_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of confirmed passengers on the manifest"
+    },
+    "trip_status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "departed",
+        "completed",
+        "cancelled"
+      ],
+      "default": "scheduled"
+    },
+    "operational_checks": {
+      "type": "object",
+      "description": "Snapshot of mandatory operational conditions at last evaluation"
+    },
+    "admin_override": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, the driver may start the trip even if mandatory conditions are not met"
+    },
+    "override_by": {
+      "type": "string"
+    },
+    "override_reason": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancellation_reason": {
+      "type": "string"
+    },
+    "incident_notes": {
+      "type": "string",
+      "description": "Free-text incident notes recorded during the trip"
+    }
+  },
+  "required": [
+    "allocation_id",
+    "departure_date",
+    "departure_time"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+TripOperationEvent.jsonc
+============================================================
+{
+  "name": "TripOperationEvent",
+  "type": "object",
+  "properties": {
+    "trip_operation_id": {
+      "type": "string"
+    },
+    "allocation_id": {
+      "type": "string"
+    },
+    "driver_user_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "passenger_check_in",
+        "trip_start",
+        "trip_completion",
+        "passenger_no_show",
+        "driver_no_show",
+        "cancellation",
+        "incident"
+      ]
+    },
+    "booking_id": {
+      "type": "string"
+    },
+    "passenger_id": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recorded_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_operation_id",
+    "event_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.driver_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
+
+============================================================
+TripRequest.jsonc
+============================================================
+{
+  "name": "TripRequest",
+  "type": "object",
+
+  "properties": {
+    "passenger_id": {
+      "type": "string"
+    },
+
+    "passenger_name": {
+      "type": "string"
+    },
+
+    "route_id": {
+      "type": "string"
+    },
+
+    "origin": {
+      "type": "string",
+      "description": "Origin town"
+    },
+
+    "destination": {
+      "type": "string",
+      "description": "Destination town"
+    },
+
+    "pickup_location": {
+      "type": "string",
+      "description": "Physical pickup location within the origin town"
+    },
+
+    "dropoff_location": {
+      "type": "string",
+      "description": "Physical drop-off location within the destination town"
+    },
+
+    "pickup_is_standard": {
+      "type": "boolean",
+      "default": false
+    },
+
+    "dropoff_is_standard": {
+      "type": "boolean",
+      "default": false
+    },
+
+    "requested_date": {
+      "type": "string"
+    },
+
+    "requested_time": {
+      "type": "string"
+    },
+
+    "time_window_minutes": {
+      "type": "number",
+      "default": 60
+    },
+
+    "booking_advance_days": {
+      "type": "number",
+      "default": 0
+    },
+
+    "number_of_seats": {
+      "type": "number",
+      "default": 1
+    },
+
+    "luggage_small_bags": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_standard_bags": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_large_suitcases": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_oversized_items": {
+      "type": "number",
+      "default": 0
+    },
+
+    "luggage_weight_category": {
+      "type": "string"
+    },
+
+    "luggage_details": {
+      "type": "string"
+    },
+
+    "notes": {
+      "type": "string"
+    },
+
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "single",
+        "group",
+        "proxy",
+        "recurring"
+      ],
+      "default": "single"
+    },
+
+    "booking_for_someone_else": {
+      "type": "boolean",
+      "default": false
+    },
+
+    "proxy_passenger_name": {
+      "type": "string"
+    },
+
+    "proxy_passenger_phone": {
+      "type": "string"
+    },
+
+    "group_name": {
+      "type": "string"
+    },
+
+    "group_size": {
+      "type": "number",
+      "default": 1
+    },
+
+    "recurring_booking_id": {
+      "type": "string"
+    },
+
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "direct_to_driver"
+      ],
+      "default": "direct_to_driver"
+    },
+
+    "request_status": {
+      "type": "string",
+      "enum": [
+        "requested",
+        "matching",
+        "matched",
+        "offers_sent",
+        "driver_selected",
+        "scheduled",
+        "booked",
+        "completed",
+        "cancelled",
+        "expired",
+        "no_driver"
+      ],
+      "default": "requested"
+    },
+
+    "matching_started_at": {
+      "type": "string"
+    },
+
+    "matching_completed_at": {
+      "type": "string"
+    },
+
+    "matched_at": {
+      "type": "string"
+    },
+
+    "matched_allocation_id": {
+      "type": "string"
+    },
+
+    "matched_driver_id": {
+      "type": "string"
+    },
+
+    "matched_driver_name": {
+      "type": "string"
+    },
+
+    "matched_driver_user_id": {
+      "type": "string"
+    },
+
+    "matched_vehicle_id": {
+      "type": "string"
+    },
+
+    "declined_driver_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+
+    "allocation_id": {
+      "type": "string"
+    },
+
+    "booking_id": {
+      "type": "string"
+    }
+  },
+
+  "required": [
+    "passenger_id",
+    "origin",
+    "destination",
+    "requested_date",
+    "requested_time",
+    "number_of_seats",
+    "request_status"
+  ]
+}
+
+============================================================
+User.jsonc
+============================================================
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "description": "Base44 system role",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user"
+    },
+
+    "app_role": {
+      "type": "string",
+      "description": "Treba application role",
+      "enum": [
+        "passenger",
+        "driver"
+      ]
+    },
+
+    "full_name": {
+      "type": "string",
+      "description": "User's full name"
+    },
+
+    "phone": {
+      "type": "string",
+      "description": "User's mobile phone number"
+    },
+
+    "account_status": {
+      "type": "string",
+      "description": "Treba account status",
+      "enum": [
+        "active",
+        "pending",
+        "suspended"
+      ],
+      "default": "active"
+    },
+
+    "profile_completion": {
+      "type": "boolean",
+      "description": "Whether the user's Treba profile has been completed",
+      "default": false
+    }
+  },
+
+  "required": [
+    "role"
+  ]
+}
+
+============================================================
+Vehicle.jsonc
+============================================================
+{
+  "name": "Vehicle",
+  "type": "object",
+  "properties": {
+    "driver_id": {
+      "type": "string",
+      "description": "ID of the driver who owns or operates this vehicle"
+    },
+
+    "make": {
+      "type": "string",
+      "description": "Vehicle manufacturer"
+    },
+
+    "model": {
+      "type": "string",
+      "description": "Vehicle model"
+    },
+
+    "year": {
+      "type": "number",
+      "description": "Vehicle manufacture year"
+    },
+
+    "registration_number": {
+      "type": "string",
+      "description": "Vehicle registration number"
+    },
+
+    "vehicle_type": {
+      "type": "string",
+      "description": "Type of vehicle"
+    },
+
+    "seating_capacity": {
+      "type": "number",
+      "description": "Number of passenger seats"
+    },
+
+    "luggage_capacity": {
+      "type": "number",
+      "description": "Approximate luggage capacity in bags"
+    },
+
+    "general_condition": {
+      "type": "string",
+      "description": "General condition of the vehicle",
+      "enum": [
+        "excellent",
+        "good",
+        "acceptable",
+        "needs_attention"
+      ]
+    },
+
+    "roadworthiness_status": {
+      "type": "string",
+      "description": "Roadworthiness verification status",
+      "enum": [
+        "valid",
+        "expired",
+        "pending",
+        "not_verified"
+      ],
+      "default": "pending"
+    },
+
+    "roadworthiness_expiry": {
+      "type": "string",
+      "description": "Roadworthiness expiry date"
+    },
+
+    "license_status": {
+      "type": "string",
+      "description": "Vehicle licence status",
+      "enum": [
+        "valid",
+        "expired",
+        "pending",
+        "not_verified"
+      ],
+      "default": "pending"
+    },
+
+    "license_expiry": {
+      "type": "string",
+      "description": "Vehicle licence expiry date"
+    },
+
+    "operator_card_status": {
+      "type": "string",
+      "description": "Operator card status",
+      "enum": [
+        "valid",
+        "expired",
+        "pending",
+        "not_verified"
+      ],
+      "default": "pending"
+    },
+
+    "operator_card_expiry": {
+      "type": "string",
+      "description": "Operator card expiry date"
+    },
+
+    "exterior_photo": {
+      "type": "string",
+      "description": "URL of vehicle exterior photo"
+    },
+
+    "interior_photo": {
+      "type": "string",
+      "description": "URL of vehicle interior photo"
+    },
+
+    "additional_photos": {
+      "type": "array",
+      "description": "Additional vehicle photo URLs",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "verification_status": {
+      "type": "string",
+      "description": "Treba vehicle verification status",
+      "enum": [
+        "pending",
+        "verified",
+        "rejected",
+        "expired"
+      ],
+      "default": "pending"
+    },
+
+    "verified_by": {
+      "type": "string",
+      "description": "ID of the administrator who verified the vehicle"
+    },
+
+    "verified_at": {
+      "type": "string",
+      "description": "Date/time vehicle was verified"
+    },
+
+    "active": {
+      "type": "boolean",
+      "description": "Whether this vehicle is currently active",
+      "default": true
+    }
+  },
+
+  "required": [
+    "driver_id",
+    "registration_number",
+    "seating_capacity",
+    "verification_status"
+  ]
+}

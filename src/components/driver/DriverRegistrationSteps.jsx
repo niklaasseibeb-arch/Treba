@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 
-import { base44 } from "@/api/base44Client";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +28,6 @@ import AuthLayout from "@/components/AuthLayout";
 import { toast } from "@/components/ui/use-toast";
 import { NAMIBIAN_TOWNS } from "@/lib/treba-places";
 
-
 const VEHICLE_TYPES = [
   {
     value: "sedan",
@@ -53,7 +50,6 @@ const VEHICLE_TYPES = [
     label: "Bus",
   },
 ];
-
 
 const STEPS = [
   {
@@ -78,8 +74,12 @@ const STEPS = [
   },
 ];
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-export default function DriverRegistrationSteps({ phone = "" }) {
+export default function DriverRegistrationSteps({
+  phone = "",
+}) {
   /*
    * =========================================================
    * STEP CONTROL
@@ -88,7 +88,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
   const [stepIdx, setStepIdx] = useState(0);
 
-
   /*
    * =========================================================
    * GENERAL STATE
@@ -96,9 +95,7 @@ export default function DriverRegistrationSteps({ phone = "" }) {
    */
 
   const [submitting, setSubmitting] = useState(false);
-
   const [error, setError] = useState("");
-
 
   /*
    * =========================================================
@@ -107,10 +104,8 @@ export default function DriverRegistrationSteps({ phone = "" }) {
    */
 
   const [photoUrl, setPhotoUrl] = useState("");
-
   const [uploadingPhoto, setUploadingPhoto] =
     useState(false);
-
 
   /*
    * =========================================================
@@ -123,7 +118,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
     phone: phone || "",
   });
 
-
   /*
    * =========================================================
    * DRIVER DETAILS
@@ -135,7 +129,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
     license_expiry: "",
     driving_experience_years: "",
   });
-
 
   /*
    * =========================================================
@@ -153,7 +146,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
     luggage_capacity: "",
   });
 
-
   /*
    * =========================================================
    * ROUTES
@@ -168,17 +160,33 @@ export default function DriverRegistrationSteps({ phone = "" }) {
   const [routeDest, setRouteDest] =
     useState("");
 
-
   /*
    * =========================================================
-   * PHOTO UPLOAD
+   * PHOTO HANDLER
    * =========================================================
+   *
+   * For now the image is stored locally as a preview.
+   *
+   * The database field profile_photo_url is supported by
+   * the backend, and can later be connected to cloud storage.
    */
 
-  const handlePhoto = async (event) => {
+  const handlePhoto = (event) => {
     const file = event.target.files?.[0];
 
     if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError(
+        "Profile photo must be smaller than 5 MB."
+      );
       return;
     }
 
@@ -186,39 +194,23 @@ export default function DriverRegistrationSteps({ phone = "" }) {
     setError("");
 
     try {
-      const result =
-        await base44.integrations.Core.UploadFile({
-          file,
-        });
+      const previewUrl =
+        URL.createObjectURL(file);
 
-      if (!result?.file_url) {
-        throw new Error(
-          "The photo could not be uploaded."
-        );
-      }
-
-      setPhotoUrl(result.file_url);
-
-      toast({
-        title: "Photo uploaded",
-        description:
-          "Your profile photo has been added.",
-      });
+      setPhotoUrl(previewUrl);
     } catch (err) {
       console.error(
-        "DRIVER PHOTO UPLOAD ERROR:",
+        "PHOTO PREVIEW ERROR:",
         err
       );
 
       setError(
-        err?.message ||
-          "Could not upload profile photo."
+        "Could not load the selected photo."
       );
     } finally {
       setUploadingPhoto(false);
     }
   };
-
 
   /*
    * =========================================================
@@ -229,26 +221,27 @@ export default function DriverRegistrationSteps({ phone = "" }) {
   const addRoute = () => {
     setError("");
 
-    if (!routeOrigin || !routeDest) {
-      setError(
-        "Please select both the From town and To town."
-      );
+    if (!routeOrigin) {
+      setError("Please select the starting town.");
+      return;
+    }
+
+    if (!routeDest) {
+      setError("Please select the destination town.");
       return;
     }
 
     if (routeOrigin === routeDest) {
       setError(
-        "From town and To town must be different."
+        "Origin and destination must be different."
       );
       return;
     }
 
-    const route = `${routeOrigin} - ${routeDest}`;
+    const route = `${routeOrigin} → ${routeDest}`;
 
     if (routes.includes(route)) {
-      setError(
-        "This route has already been added."
-      );
+      setError("This route has already been added.");
       return;
     }
 
@@ -260,7 +253,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
     setRouteOrigin("");
     setRouteDest("");
   };
-
 
   /*
    * =========================================================
@@ -276,7 +268,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
     );
   };
 
-
   /*
    * =========================================================
    * VALIDATE CURRENT STEP
@@ -286,13 +277,14 @@ export default function DriverRegistrationSteps({ phone = "" }) {
   const validateStep = () => {
     setError("");
 
-
     /*
      * STEP 1 — PERSONAL
      */
 
     if (stepIdx === 0) {
-      if (!personal.full_name.trim()) {
+      if (
+        !personal.full_name.trim()
+      ) {
         setError(
           "Full name is required."
         );
@@ -307,13 +299,14 @@ export default function DriverRegistrationSteps({ phone = "" }) {
       }
     }
 
-
     /*
      * STEP 2 — DRIVER
      */
 
     if (stepIdx === 1) {
-      if (!driver.license_number.trim()) {
+      if (
+        !driver.license_number.trim()
+      ) {
         setError(
           "Driver licence number is required."
         );
@@ -322,12 +315,24 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
       if (!driver.license_expiry) {
         setError(
-          "Driver licence expiry date is required."
+          "Licence expiry date is required."
+        );
+        return false;
+      }
+
+      if (
+        driver.driving_experience_years !==
+          "" &&
+        Number(
+          driver.driving_experience_years
+        ) < 0
+      ) {
+        setError(
+          "Driving experience cannot be negative."
         );
         return false;
       }
     }
-
 
     /*
      * STEP 3 — VEHICLE
@@ -368,7 +373,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
       }
     }
 
-
     /*
      * STEP 4 — ROUTES
      */
@@ -384,7 +388,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
     return true;
   };
-
 
   /*
    * =========================================================
@@ -405,15 +408,13 @@ export default function DriverRegistrationSteps({ phone = "" }) {
       return;
     }
 
-    setStepIdx(
-      (currentStep) =>
-        Math.min(
-          currentStep + 1,
-          STEPS.length - 1
-        )
+    setStepIdx((currentStep) =>
+      Math.min(
+        currentStep + 1,
+        STEPS.length - 1
+      )
     );
   };
-
 
   /*
    * =========================================================
@@ -424,12 +425,10 @@ export default function DriverRegistrationSteps({ phone = "" }) {
   const handleBack = () => {
     setError("");
 
-    setStepIdx(
-      (currentStep) =>
-        Math.max(currentStep - 1, 0)
+    setStepIdx((currentStep) =>
+      Math.max(currentStep - 1, 0)
     );
   };
-
 
   /*
    * =========================================================
@@ -445,72 +444,69 @@ export default function DriverRegistrationSteps({ phone = "" }) {
     setSubmitting(true);
     setError("");
 
-
     try {
       /*
        * -----------------------------------------------------
-       * 1. VERIFY AUTHENTICATED BASE44 USER
+       * GET JWT TOKEN
        * -----------------------------------------------------
        */
 
-      const authenticatedUser =
-        await base44.auth.me();
+      const token =
+        localStorage.getItem("treba_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("treba_token") ||
+        sessionStorage.getItem("token");
 
-      console.log(
-        "TREBA DRIVER REGISTRATION USER:",
-        authenticatedUser
-      );
-
-      if (!authenticatedUser?.id) {
+      if (!token) {
         throw new Error(
-          "Your account session could not be found. Please log in again."
+          "Your login session could not be found. Please log in again."
         );
       }
 
-
       /*
        * -----------------------------------------------------
-       * 2. UPDATE BASE44 USER
+       * BUILD REGISTRATION PAYLOAD
        * -----------------------------------------------------
-       *
-       * This keeps the authentication user as the
-       * central account record.
        */
 
-      await base44.auth.updateMe({
-        app_role: "driver",
-        full_name:
-          personal.full_name.trim(),
-        phone:
-          personal.phone.trim(),
-      });
+      const payload = {
+        personal: {
+          full_name:
+            personal.full_name.trim(),
 
+          phone:
+            personal.phone.trim(),
 
-      /*
-       * -----------------------------------------------------
-       * 3. CREATE VEHICLE
-       * -----------------------------------------------------
-       *
-       * DriverProfile needs the vehicle ID.
-       *
-       * Vehicle.driver_id is initially set to the
-       * authenticated user's ID.
-       */
+          profile_photo_url:
+            photoUrl || null,
+        },
 
-      const createdVehicle =
-        await base44.entities.Vehicle.create({
-          driver_id:
-            authenticatedUser.id,
+        driver: {
+          license_number:
+            driver.license_number.trim(),
 
+          license_expiry:
+            driver.license_expiry || null,
+
+          driving_experience_years:
+            driver.driving_experience_years
+              ? Number(
+                  driver.driving_experience_years
+                )
+              : 0,
+        },
+
+        vehicle: {
           make:
             vehicle.make.trim(),
 
           model:
             vehicle.model.trim(),
 
-          year: vehicle.year
-            ? Number(vehicle.year)
-            : undefined,
+          year:
+            vehicle.year
+              ? Number(vehicle.year)
+              : null,
 
           registration_number:
             vehicle.registration_number.trim(),
@@ -524,88 +520,98 @@ export default function DriverRegistrationSteps({ phone = "" }) {
             ),
 
           luggage_capacity:
-            Number(
-              vehicle.luggage_capacity || 0
-            ),
+            vehicle.luggage_capacity
+              ? Number(
+                  vehicle.luggage_capacity
+                )
+              : 0,
+        },
 
-          verification_status:
-            "pending",
+        routes,
+      };
 
-          active: true,
-        });
-
-
-      if (!createdVehicle?.id) {
-        throw new Error(
-          "Vehicle registration could not be completed."
-        );
-      }
-
+      console.log(
+        "TREBA DRIVER REGISTRATION PAYLOAD:",
+        payload
+      );
 
       /*
        * -----------------------------------------------------
-       * 4. CREATE DRIVER PROFILE
+       * SEND TO EXPRESS API
        * -----------------------------------------------------
        */
 
-      await base44.entities.DriverProfile.create({
-        user_id:
-          authenticatedUser.id,
+      const response = await fetch(
+        `${API_BASE_URL}/api/drivers/register`,
+        {
+          method: "POST",
 
-        full_name:
-          personal.full_name.trim(),
+          headers: {
+            "Content-Type":
+              "application/json",
 
-        phone:
-          personal.phone.trim(),
+            Authorization:
+              `Bearer ${token}`,
+          },
 
-        driver_status:
-          "pending",
-
-        availability_status:
-          "available",
-
-        preferred_routes:
-          routes,
-
-        rating: 0,
-
-        rating_count: 0,
-
-        trips_completed: 0,
-
-        maximum_trips_per_day: 2,
-
-        minimum_rest_hours: 8,
-
-        scheduling_score: 0,
-
-        fatigue_score: 0,
-
-        fairness_score: 0,
-      });
-
+          body: JSON.stringify(payload),
+        }
+      );
 
       /*
        * -----------------------------------------------------
-       * 5. REGISTRATION COMPLETE
+       * READ API RESPONSE
+       * -----------------------------------------------------
+       */
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error(
+          "API JSON ERROR:",
+          jsonError
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            data?.error ||
+            `Driver registration failed (${response.status}).`
+        );
+      }
+
+      if (!data?.ok) {
+        throw new Error(
+          data?.message ||
+            "Driver registration could not be completed."
+        );
+      }
+
+      /*
+       * -----------------------------------------------------
+       * SUCCESS
        * -----------------------------------------------------
        */
 
       console.log(
-        "TREBA DRIVER REGISTRATION COMPLETE"
+        "TREBA DRIVER REGISTRATION COMPLETE:",
+        data
       );
 
       toast({
         title:
           "Driver registration submitted",
+
         description:
           "Your driver account is pending verification.",
       });
 
-
       /*
        * -----------------------------------------------------
-       * 6. GO TO DRIVER DASHBOARD
+       * GO TO DRIVER DASHBOARD
        * -----------------------------------------------------
        */
 
@@ -623,21 +629,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
         err?.message
       );
 
-      console.error(
-        "Error response:",
-        err?.response
-      );
-
-      console.error(
-        "Error data:",
-        err?.data
-      );
-
-      console.error(
-        "Error status:",
-        err?.status
-      );
-
       setError(
         err?.message ||
           "Could not complete driver registration."
@@ -648,7 +639,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
     }
   };
 
-
   /*
    * =========================================================
    * CURRENT STEP ICON
@@ -657,7 +647,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
   const StepIcon =
     STEPS[stepIdx].icon;
-
 
   /*
    * =========================================================
@@ -672,9 +661,9 @@ export default function DriverRegistrationSteps({ phone = "" }) {
       subtitle="Provide the information Treba needs to verify your driver account."
     >
 
-      {/* -------------------------------------------------- */}
+      {/* ================================================== */}
       {/* STEP INDICATOR */}
-      {/* -------------------------------------------------- */}
+      {/* ================================================== */}
 
       <ol className="mb-6 flex items-center gap-1">
 
@@ -741,17 +730,15 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
       </ol>
 
-
-      {/* -------------------------------------------------- */}
+      {/* ================================================== */}
       {/* ERROR */}
-      {/* -------------------------------------------------- */}
+      {/* ================================================== */}
 
       {error && (
         <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </div>
       )}
-
 
       {/* ================================================== */}
       {/* STEP 1 — PERSONAL */}
@@ -760,7 +747,7 @@ export default function DriverRegistrationSteps({ phone = "" }) {
       {stepIdx === 0 && (
         <div className="space-y-5">
 
-          {/* Profile photo */}
+          {/* PROFILE PHOTO */}
 
           <div className="flex items-center gap-4">
 
@@ -809,8 +796,7 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
           </div>
 
-
-          {/* Full name */}
+          {/* FULL NAME */}
 
           <div className="space-y-2">
 
@@ -837,8 +823,7 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
           </div>
 
-
-          {/* Mobile */}
+          {/* MOBILE */}
 
           <div className="space-y-2">
 
@@ -867,7 +852,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
         </div>
       )}
 
-
       {/* ================================================== */}
       {/* STEP 2 — DRIVER */}
       {/* ================================================== */}
@@ -893,12 +877,12 @@ export default function DriverRegistrationSteps({ phone = "" }) {
                     event.target.value,
                 })
               }
+              placeholder="Driver licence number"
               className="h-11"
               required
             />
 
           </div>
-
 
           <div className="space-y-2">
 
@@ -925,7 +909,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
           </div>
 
-
           <div className="space-y-2">
 
             <Label htmlFor="experience">
@@ -946,11 +929,11 @@ export default function DriverRegistrationSteps({ phone = "" }) {
                     event.target.value,
                 })
               }
+              placeholder="e.g. 5"
               className="h-11"
             />
 
           </div>
-
 
           <p className="text-xs text-muted-foreground">
             Your driver account will remain
@@ -961,7 +944,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
         </div>
       )}
 
-
       {/* ================================================== */}
       {/* STEP 3 — VEHICLE */}
       {/* ================================================== */}
@@ -970,6 +952,8 @@ export default function DriverRegistrationSteps({ phone = "" }) {
         <div className="space-y-5">
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+            {/* MAKE */}
 
             <div className="space-y-2">
 
@@ -993,6 +977,7 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
             </div>
 
+            {/* MODEL */}
 
             <div className="space-y-2">
 
@@ -1018,8 +1003,9 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
           </div>
 
-
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+            {/* REGISTRATION */}
 
             <div className="space-y-2">
 
@@ -1045,6 +1031,7 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
             </div>
 
+            {/* VEHICLE TYPE */}
 
             <div className="space-y-2">
 
@@ -1066,7 +1053,7 @@ export default function DriverRegistrationSteps({ phone = "" }) {
               >
 
                 <SelectTrigger className="h-11">
-                  <SelectValue />
+                  <SelectValue placeholder="Select vehicle type" />
                 </SelectTrigger>
 
                 <SelectContent>
@@ -1090,8 +1077,9 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
           </div>
 
-
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+            {/* YEAR */}
 
             <div className="space-y-2">
 
@@ -1102,6 +1090,7 @@ export default function DriverRegistrationSteps({ phone = "" }) {
               <Input
                 type="number"
                 min="1900"
+                max="2100"
                 value={vehicle.year}
                 onChange={(event) =>
                   setVehicle({
@@ -1110,11 +1099,13 @@ export default function DriverRegistrationSteps({ phone = "" }) {
                       event.target.value,
                   })
                 }
+                placeholder="2020"
                 className="h-11"
               />
 
             </div>
 
+            {/* PASSENGER CAPACITY */}
 
             <div className="space-y-2">
 
@@ -1135,12 +1126,14 @@ export default function DriverRegistrationSteps({ phone = "" }) {
                       event.target.value,
                   })
                 }
+                placeholder="14"
                 className="h-11"
                 required
               />
 
             </div>
 
+            {/* LUGGAGE */}
 
             <div className="space-y-2">
 
@@ -1161,6 +1154,7 @@ export default function DriverRegistrationSteps({ phone = "" }) {
                       event.target.value,
                   })
                 }
+                placeholder="10"
                 className="h-11"
               />
 
@@ -1170,7 +1164,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
         </div>
       )}
-
 
       {/* ================================================== */}
       {/* STEP 4 — ROUTES */}
@@ -1185,7 +1178,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
             these routes when matching passenger
             requests.
           </p>
-
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]">
 
@@ -1219,7 +1211,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
             </Select>
 
-
             {/* TO */}
 
             <Select
@@ -1250,7 +1241,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
             </Select>
 
-
             {/* ADD */}
 
             <Button
@@ -1264,7 +1254,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
             </Button>
 
           </div>
-
 
           {/* ROUTE LIST */}
 
@@ -1285,6 +1274,7 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
                   <button
                     type="button"
+                    aria-label={`Remove ${route}`}
                     className="ml-auto text-muted-foreground hover:text-destructive"
                     onClick={() =>
                       removeRoute(route)
@@ -1301,7 +1291,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
 
         </div>
       )}
-
 
       {/* ================================================== */}
       {/* NAVIGATION */}
@@ -1320,7 +1309,6 @@ export default function DriverRegistrationSteps({ phone = "" }) {
         >
           Back
         </Button>
-
 
         <Button
           type="button"

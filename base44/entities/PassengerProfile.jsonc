@@ -1,55 +1,101 @@
-{
-  "name": "User",
+﻿{
+  "name": "PassengerProfile",
   "type": "object",
   "properties": {
-    "role": {
+    "user_id": {
       "type": "string",
-      "description": "Base44 system role",
-      "enum": [
-        "admin",
-        "user"
-      ],
-      "default": "user"
-    },
-
-    "app_role": {
-      "type": "string",
-      "description": "Treba application role",
-      "enum": [
-        "passenger",
-        "driver"
-      ]
+      "description": "ID of the authenticated Treba user"
     },
 
     "full_name": {
       "type": "string",
-      "description": "User's full name"
+      "description": "Passenger's full name"
     },
 
     "phone": {
       "type": "string",
-      "description": "User's mobile phone number"
+      "description": "Passenger's mobile phone number"
+    },
+
+    "email": {
+      "type": "string",
+      "description": "Passenger's email address"
+    },
+
+    "profile_photo_url": {
+      "type": "string",
+      "description": "URL of passenger profile photo"
+    },
+
+    "preferred_contact_method": {
+      "type": "string",
+      "description": "Passenger's preferred contact method",
+      "enum": [
+        "phone",
+        "sms",
+        "whatsapp",
+        "email"
+      ]
+    },
+
+    "emergency_contact_name": {
+      "type": "string",
+      "description": "Emergency contact name"
+    },
+
+    "emergency_contact_phone": {
+      "type": "string",
+      "description": "Emergency contact phone number"
+    },
+
+    "payment_methods": {
+      "type": "array",
+      "description": "Passenger payment methods",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+
+    "trips_completed": {
+      "type": "number",
+      "description": "Number of completed trips",
+      "default": 0
+    },
+
+    "trips_cancelled": {
+      "type": "number",
+      "description": "Number of cancelled trips",
+      "default": 0
+    },
+
+    "no_show_count": {
+      "type": "number",
+      "description": "Number of passenger no-shows",
+      "default": 0
+    },
+
+    "reliability_score": {
+      "type": "number",
+      "description": "Passenger reliability score",
+      "default": 100
     },
 
     "account_status": {
       "type": "string",
-      "description": "Treba account status",
+      "description": "Passenger account status",
       "enum": [
         "active",
         "pending",
         "suspended"
       ],
       "default": "active"
-    },
-
-    "profile_completion": {
-      "type": "boolean",
-      "description": "Whether the user's Treba profile has been completed",
-      "default": false
     }
   },
 
   "required": [
-    "role"
+    "user_id",
+    "full_name",
+    "phone"
   ]
 }

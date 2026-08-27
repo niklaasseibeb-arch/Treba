@@ -1,36 +1,32 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { base44 } from "@/api/base44Client";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import {
-  Car,
   Loader2,
   Lock,
   Mail,
   UserPlus,
-  Luggage,
   ShieldCheck,
+  Luggage,
+  Car,
+  Phone,
 } from "lucide-react";
 
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
-import { safeReturnTo } from "@/lib/authReturnTo";
-
-import DriverRegistrationSteps from "@/components/driver/DriverRegistrationSteps";
 
 const CONTACT_METHODS = [
   {
-    value: "whatsapp",
-    label: "WhatsApp",
+    value: "sms",
+    label: "SMS",
   },
   {
-    value: "phone_call",
-    label: "Phone call",
+    value: "whatsapp",
+    label: "WhatsApp",
   },
   {
     value: "email",
@@ -38,10 +34,30 @@ const CONTACT_METHODS = [
   },
 ];
 
+/*
+ * =========================================================
+ * REGISTER
+ * =========================================================
+ *
+ * Treba authentication is now handled by:
+ *
+ * React
+ *   ↓
+ * Express API
+ *   ↓
+ * PostgreSQL
+ *
+ * Authentication:
+ *
+ * bcrypt + JWT
+ *
+ * Base44 authentication is NOT used here.
+ */
+
 export default function Register() {
   /*
    * =========================================================
-   * ACCOUNT STATE
+   * ACCOUNT
    * =========================================================
    */
 
@@ -54,7 +70,7 @@ export default function Register() {
 
   /*
    * =========================================================
-   * PASSENGER STATE
+   * PASSENGER DETAILS
    * =========================================================
    */
 
@@ -62,7 +78,7 @@ export default function Register() {
   const [phone, setPhone] = useState("");
 
   const [preferredContact, setPreferredContact] =
-    useState("whatsapp");
+    useState("sms");
 
   const [emergencyName, setEmergencyName] =
     useState("");
@@ -70,43 +86,25 @@ export default function Register() {
   const [emergencyPhone, setEmergencyPhone] =
     useState("");
 
-  const [photoUrl, setPhotoUrl] = useState("");
-
-  const [uploadingPhoto, setUploadingPhoto] =
-    useState(false);
-
   /*
    * =========================================================
-   * VERIFICATION STATE
+   * MOBILE OTP
    * =========================================================
    */
 
-  const [verificationCode, setVerificationCode] =
-    useState("");
-
-  const [mobileOtp, setMobileOtp] =
-    useState("");
+  const [mobileOtp, setMobileOtp] = useState("");
 
   /*
    * =========================================================
-   * SCREEN STATE
+   * UI
    * =========================================================
-   *
-   * account
-   * emailVerification
-   * passengerDetails
-   * mobileOtp
-   * driverDetails
    */
 
-  const [step, setStep] =
-    useState("account");
+  const [step, setStep] = useState("account");
 
-  const [error, setError] =
-    useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [error, setError] = useState("");
 
   /*
    * =========================================================
@@ -119,393 +117,288 @@ export default function Register() {
 
   /*
    * =========================================================
-   * CONTINUE AFTER BASE44 AUTHENTICATION
+   * STORE AUTH SESSION
    * =========================================================
    */
 
-  const continueAfterAuthentication =
-    async (authenticatedUser) => {
-      if (!authenticatedUser?.id) {
-        throw new Error(
-          "Authenticated user could not be found."
-        );
-      }
+  const storeAuthentication = (
+    token,
+    user
+  ) => {
+    if (!token) {
+      throw new Error(
+        "No authentication token was returned."
+      );
+    }
 
+    if (!user?.id) {
+      throw new Error(
+        "No authenticated user was returned."
+      );
+    }
+
+    localStorage.setItem(
+      "treba_token",
+      token
+    );
+
+    localStorage.setItem(
+      "treba_user",
+      JSON.stringify(user)
+    );
+  };
+
+  /*
+   * =========================================================
+   * REGISTER ACCOUNT
+   * =========================================================
+   */
+
+  const handleAccountSubmit = async (
+    event
+  ) => {
+    event.preventDefault();
+
+    setError("");
+
+    /*
+     * Basic validation.
+     */
+
+    if (!cleanEmail) {
+      setError(
+        "Email address is required."
+      );
+      return;
+    }
+
+    if (!password) {
+      setError(
+        "Password is required."
+      );
+      return;
+    }
+
+    if (password.length < 8) {
+      setError(
+        "Password must be at least 8 characters."
+      );
+      return;
+    }
+
+    if (
+      password !==
+      confirmPassword
+    ) {
+      setError(
+        "Passwords do not match."
+      );
+      return;
+    }
+
+    if (!fullName.trim()) {
+      setError(
+        "Full name is required."
+      );
+      return;
+    }
+
+    if (!phone.trim()) {
+      setError(
+        "Mobile number is required."
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    try {
       console.log(
-        "TREBA AUTHENTICATED USER:",
-        authenticatedUser
+        "================================="
       );
 
-      /*
-       * Store Treba marketplace role.
-       */
-
-      await base44.auth.updateMe({
-        app_role: role,
-        email:
-          authenticatedUser.email ||
-          cleanEmail,
-        profile_completion: false,
-      });
+      console.log(
+        "TREBA REGISTRATION START"
+      );
 
       console.log(
-        "TREBA ROLE ASSIGNED:",
+        "Email:",
+        cleanEmail
+      );
+
+      console.log(
+        "Role:",
         role
       );
 
+      console.log(
+        "================================="
+      );
+
       /*
-       * Continue to the appropriate
-       * Treba registration process.
+       * Create account through
+       * our own Treba API.
        */
 
-      if (role === "driver") {
-        setStep("driverDetails");
-      } else {
-        setStep("passengerDetails");
-      }
-    };
+      const response =
+        await fetch(
+          "/api/auth/register",
+          {
+            method: "POST",
 
-  /*
-   * =========================================================
-   * ACCOUNT CREATION
-   * =========================================================
-   */
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
 
-  const handleAccountSubmit =
-    async (event) => {
-      event.preventDefault();
+            body: JSON.stringify({
+              app_role: role,
 
-      setError("");
+              full_name:
+                fullName.trim(),
 
-      if (!cleanEmail) {
-        setError(
-          "Email address is required."
+              phone:
+                phone.trim(),
+
+              email:
+                cleanEmail,
+
+              password,
+            }),
+          }
         );
-        return;
-      }
 
-      if (password.length < 8) {
-        setError(
-          "Password must be at least 8 characters."
-        );
-        return;
-      }
+      const data =
+        await response.json();
 
-      if (password !== confirmPassword) {
-        setError(
-          "Passwords do not match."
-        );
-        return;
-      }
+      console.log(
+        "TREBA REGISTER RESULT:",
+        data
+      );
 
-      if (!role) {
-        setError(
-          "Please select Passenger or Driver."
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            data?.error ||
+            "Failed to create account."
         );
-        return;
       }
 
-      setLoading(true);
-
-      try {
-        console.log(
-          "================================="
+      if (
+        !data?.token ||
+        !data?.user
+      ) {
+        throw new Error(
+          "Account was created, but no authentication session was returned."
         );
-
-        console.log(
-          "TREBA REGISTRATION START"
-        );
-
-        console.log(
-          "Email:",
-          cleanEmail
-        );
-
-        console.log(
-          "Role:",
-          role
-        );
-
-        console.log(
-          "================================="
-        );
-
-        /*
-         * IMPORTANT:
-         *
-         * This is the actual SDK method
-         * available in @base44/sdk 0.8.43.
-         */
-
-        const result =
-          await base44.auth.register({
-            email: cleanEmail,
-            password,
-          });
-
-        console.log(
-          "TREBA BASE44 REGISTER RESULT:",
-          result
-        );
-
-        /*
-         * Base44 requires email verification.
-         *
-         * Do NOT attempt login yet.
-         */
-
-        sessionStorage.setItem(
-          "treba_registration_role",
-          role
-        );
-
-        sessionStorage.setItem(
-          "treba_registration_email",
-          cleanEmail
-        );
-
-        /*
-         * Move to Base44 email verification.
-         */
-
-        setVerificationCode("");
-
-        setStep(
-          "emailVerification"
-        );
-
-      } catch (err) {
-        console.error(
-          "TREBA REGISTRATION FAILED:",
-          err
-        );
-
-        console.error(
-          "Message:",
-          err?.message
-        );
-
-        console.error(
-          "Status:",
-          err?.status
-        );
-
-        console.error(
-          "Response:",
-          err?.response
-        );
-
-        console.error(
-          "Data:",
-          err?.data
-        );
-
-        setError(
-          err?.message ||
-            err?.response?.data?.message ||
-            err?.data?.message ||
-            "Unable to create your account."
-        );
-
-      } finally {
-        setLoading(false);
-      }
-    };
-
-  /*
-   * =========================================================
-   * BASE44 EMAIL VERIFICATION
-   * =========================================================
-   */
-
-  const handleEmailVerification =
-    async () => {
-      setError("");
-
-      const code =
-        verificationCode.trim();
-
-      if (!code) {
-        setError(
-          "Enter the verification code sent to your email."
-        );
-        return;
-      }
-
-      setLoading(true);
-
-      try {
-        console.log(
-          "TREBA EMAIL VERIFICATION START"
-        );
-
-        /*
-         * IMPORTANT:
-         *
-         * SDK 0.8.43 requires:
-         *
-         * verifyOtp({
-         *   email,
-         *   otpCode
-         * })
-         */
-
-        const verificationResult =
-          await base44.auth.verifyOtp({
-            email: cleanEmail,
-            otpCode: code,
-          });
-
-        console.log(
-          "TREBA EMAIL VERIFICATION RESULT:",
-          verificationResult
-        );
-
-        /*
-         * Email verification does not necessarily
-         * establish the login session.
-         *
-         * Therefore explicitly authenticate.
-         */
-
-        const loginResult =
-          await base44.auth.loginViaEmailPassword(
-            cleanEmail,
-            password
-          );
-
-        console.log(
-          "TREBA LOGIN AFTER EMAIL VERIFICATION:",
-          loginResult
-        );
-
-        /*
-         * Retrieve authenticated Base44 user.
-         */
-
-        const authenticatedUser =
-          await base44.auth.me();
-
-        console.log(
-          "TREBA AUTHENTICATED USER:",
-          authenticatedUser
-        );
-
-        if (!authenticatedUser?.id) {
-          throw new Error(
-            "Email verified, but Treba could not establish your login session."
-          );
-        }
-
-        /*
-         * Continue with selected Treba role.
-         */
-
-        await continueAfterAuthentication(
-          authenticatedUser
-        );
-
-      } catch (err) {
-        console.error(
-          "TREBA EMAIL VERIFICATION FAILED:",
-          err
-        );
-
-        console.error(
-          "Message:",
-          err?.message
-        );
-
-        console.error(
-          "Status:",
-          err?.status
-        );
-
-        console.error(
-          "Response:",
-          err?.response
-        );
-
-        console.error(
-          "Data:",
-          err?.data
-        );
-
-        setError(
-          err?.message ||
-            err?.response?.data?.message ||
-            err?.data?.message ||
-            "Email verification failed. Please check the code and try again."
-        );
-
-      } finally {
-        setLoading(false);
-      }
-    };
-
-  /*
-   * =========================================================
-   * PASSENGER DETAILS
-   * =========================================================
-   */
-
-  const handlePassengerDetailsSubmit =
-    async (event) => {
-      event.preventDefault();
-
-      setError("");
-
-      if (!fullName.trim()) {
-        setError(
-          "Full name is required."
-        );
-        return;
-      }
-
-      if (!phone.trim()) {
-        setError(
-          "Mobile number is required."
-        );
-        return;
       }
 
       /*
-       * Temporary Treba mobile OTP.
+       * Store JWT.
+       */
+
+      storeAuthentication(
+        data.token,
+        data.user
+      );
+
+      /*
+       * Keep the user information
+       * in localStorage.
+       */
+
+      console.log(
+        "TREBA AUTHENTICATION STORED"
+      );
+
+      /*
+       * Passenger:
        *
-       * This is separate from Base44
-       * email verification.
+       * Continue to mobile
+       * verification.
        */
 
-      const code =
-        String(
-          Math.floor(
-            100000 +
-              Math.random() *
-                900000
-          )
+      if (
+        role === "passenger"
+      ) {
+        setStep("passengerOtp");
+
+        /*
+         * Development-only OTP.
+         *
+         * This will later be replaced
+         * with the real SMS service.
+         */
+
+        const code =
+          String(
+            Math.floor(
+              100000 +
+                Math.random() *
+                  900000
+            )
+          );
+
+        sessionStorage.setItem(
+          "treba_passenger_mobile_otp",
+          code
         );
 
-      sessionStorage.setItem(
-        "treba_passenger_mobile_otp",
-        code
-      );
+        /*
+         * DEVELOPMENT ONLY
+         */
 
-      setMobileOtp("");
+        alert(
+          `Treba mobile verification code: ${code}`
+        );
+
+        return;
+      }
 
       /*
-       * For development/testing only.
+       * Driver registration.
+       *
+       * Driver onboarding will be
+       * handled separately.
        */
 
-      alert(
-        `Treba mobile verification code: ${code}`
+      window.location.href =
+        "/app/driver";
+    } catch (err) {
+      console.error(
+        "================================="
       );
 
-      setStep("mobileOtp");
-    };
+      console.error(
+        "TREBA REGISTRATION FAILED"
+      );
+
+      console.error(
+        "Error:",
+        err
+      );
+
+      console.error(
+        "Message:",
+        err?.message
+      );
+
+      console.error(
+        "================================="
+      );
+
+      setError(
+        err?.message ||
+          "Could not create your account."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /*
    * =========================================================
-   * PASSENGER MOBILE VERIFICATION
+   * VERIFY PASSENGER MOBILE
    * =========================================================
    */
 
@@ -518,8 +411,16 @@ export default function Register() {
           "treba_passenger_mobile_otp"
         );
 
+      if (!savedCode) {
+        setError(
+          "Your verification code has expired. Please register again."
+        );
+        return;
+      }
+
       if (
-        mobileOtp !== savedCode
+        mobileOtp.trim() !==
+        savedCode
       ) {
         setError(
           "Incorrect verification code."
@@ -530,101 +431,170 @@ export default function Register() {
       setLoading(true);
 
       try {
-        const authenticatedUser =
-          await base44.auth.me();
+        /*
+         * Retrieve our Treba JWT.
+         */
 
-        if (!authenticatedUser?.id) {
+        const token =
+          localStorage.getItem(
+            "treba_token"
+          );
+
+        if (!token) {
           throw new Error(
-            "Your account session could not be found."
+            "Your authentication session could not be found."
           );
         }
 
         /*
-         * Update Base44 User.
+         * Retrieve authenticated
+         * user from our API.
          */
 
-        await base44.auth.updateMe({
-          app_role: "passenger",
-          full_name:
-            fullName.trim(),
-          phone:
-            phone.trim(),
-          email:
-            cleanEmail,
-          profile_completion:
-            true,
-        });
-
-        /*
-         * Check for an existing
-         * PassengerProfile.
-         */
-
-        const existingProfiles =
-          await base44.entities.PassengerProfile.filter(
+        const meResponse =
+          await fetch(
+            "/api/auth/me",
             {
-              user_id:
-                authenticatedUser.id,
+              method: "GET",
+
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
             }
           );
 
+        const meData =
+          await meResponse.json();
+
+        console.log(
+          "TREBA AUTH ME:",
+          meData
+        );
+
+        if (!meResponse.ok) {
+          throw new Error(
+            meData?.message ||
+              "Your authentication session is invalid."
+          );
+        }
+
+        const authenticatedUser =
+          meData?.user;
+
+        if (
+          !authenticatedUser?.id
+        ) {
+          throw new Error(
+            "Authenticated user could not be found."
+          );
+        }
+
         /*
-         * Create profile only once.
+         * Update local user data.
+         */
+
+        localStorage.setItem(
+          "treba_user",
+          JSON.stringify(
+            authenticatedUser
+          )
+        );
+
+        /*
+         * Create passenger profile
+         * through our PostgreSQL API.
+         */
+
+        const profileResponse =
+          await fetch(
+            "/api/passengers",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+
+                Authorization:
+                  `Bearer ${token}`,
+              },
+
+              body: JSON.stringify({
+                user_id:
+                  authenticatedUser.id,
+
+                full_name:
+                  fullName.trim(),
+
+                phone:
+                  phone.trim(),
+
+                email:
+                  cleanEmail,
+
+                preferred_contact_method:
+                  preferredContact,
+
+                emergency_contact_name:
+                  emergencyName.trim() ||
+                  null,
+
+                emergency_contact_phone:
+                  emergencyPhone.trim() ||
+                  null,
+
+                payment_methods: [],
+              }),
+            }
+          );
+
+        const profileData =
+          await profileResponse.json();
+
+        console.log(
+          "TREBA PASSENGER PROFILE RESULT:",
+          profileData
+        );
+
+        /*
+         * The profile endpoint may
+         * return an error if the profile
+         * already exists.
          */
 
         if (
-          !existingProfiles ||
-          existingProfiles.length === 0
+          !profileResponse.ok
         ) {
-          await base44.entities.PassengerProfile.create(
-            {
-              user_id:
-                authenticatedUser.id,
+          /*
+           * If the profile already
+           * exists, we can still
+           * continue.
+           */
 
-              full_name:
-                fullName.trim(),
+          const profileMessage =
+            profileData?.error ||
+            profileData?.message ||
+            "";
 
-              phone:
-                phone.trim(),
-
-              email:
-                cleanEmail,
-
-              preferred_contact_method:
-                preferredContact,
-
-              emergency_contact_name:
-                emergencyName.trim(),
-
-              emergency_contact_phone:
-                emergencyPhone.trim(),
-
-              profile_photo_url:
-                photoUrl,
-
-              phone_verified:
-                true,
-
-              active:
-                true,
-            }
-          );
+          if (
+            !profileMessage
+              .toLowerCase()
+              .includes("already")
+          ) {
+            throw new Error(
+              profileMessage ||
+                "Could not create passenger profile."
+            );
+          }
         }
 
         /*
-         * Clean temporary registration data.
+         * Clean temporary data.
          */
 
         sessionStorage.removeItem(
           "treba_passenger_mobile_otp"
-        );
-
-        sessionStorage.removeItem(
-          "treba_registration_role"
-        );
-
-        sessionStorage.removeItem(
-          "treba_registration_email"
         );
 
         /*
@@ -633,7 +603,6 @@ export default function Register() {
 
         window.location.href =
           "/app/passenger";
-
       } catch (err) {
         console.error(
           "TREBA PASSENGER REGISTRATION FAILED:",
@@ -644,7 +613,6 @@ export default function Register() {
           err?.message ||
             "Could not complete passenger registration."
         );
-
       } finally {
         setLoading(false);
       }
@@ -652,116 +620,66 @@ export default function Register() {
 
   /*
    * =========================================================
-   * PHOTO UPLOAD
-   * =========================================================
-   */
-
-  const handlePhoto = async (
-    event
-  ) => {
-    const file =
-      event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    setUploadingPhoto(true);
-
-    try {
-      const result =
-        await base44.integrations.Core.UploadFile(
-          {
-            file,
-          }
-        );
-
-      if (result?.file_url) {
-        setPhotoUrl(
-          result.file_url
-        );
-      }
-
-    } catch (err) {
-      console.error(
-        "TREBA PHOTO UPLOAD FAILED:",
-        err
-      );
-
-      setError(
-        err?.message ||
-          "Could not upload photo."
-      );
-
-    } finally {
-      setUploadingPhoto(false);
-    }
-  };
-
-  /*
-   * =========================================================
    * GOOGLE
    * =========================================================
+   *
+   * Google authentication is intentionally
+   * disabled for this custom JWT migration.
+   *
+   * We will implement Google OAuth separately
+   * after email/password authentication is
+   * completely stable.
    */
 
-  const handleGoogle = () => {
-    try {
-      sessionStorage.setItem(
-        "treba_registration_role",
-        role
-      );
-
-      base44.auth.loginWithProvider(
-        "google",
-        safeReturnTo()
-      );
-
-    } catch (err) {
-      console.error(
-        "TREBA GOOGLE REGISTRATION FAILED:",
-        err
-      );
-
+  const handleGoogle =
+    () => {
       setError(
-        err?.message ||
-          "Unable to start Google registration."
+        "Google registration will be enabled after the Treba authentication migration is complete."
       );
-    }
-  };
+    };
 
   /*
    * =========================================================
-   * DRIVER REGISTRATION
+   * MOBILE OTP SCREEN
    * =========================================================
    */
 
   if (
-    step === "driverDetails"
-  ) {
-    return (
-      <DriverRegistrationSteps
-        phone={phone}
-      />
-    );
-  }
-
-  /*
-   * =========================================================
-   * EMAIL VERIFICATION SCREEN
-   * =========================================================
-   */
-
-  if (
-    step ===
-    "emailVerification"
+    step === "passengerOtp"
   ) {
     return (
       <AuthLayout
         icon={ShieldCheck}
-        title="Verify your email"
-        subtitle={`Enter the verification code sent to ${cleanEmail}`}
-      >
+        title="Verify your mobile number"
+        subtitle={`Enter the 6-digit code sent to ${phone}`}
+        footer={
+          <>
+            Need to start again?{" "}
 
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem(
+                  "treba_passenger_mobile_otp"
+                );
+
+                localStorage.removeItem(
+                  "treba_token"
+                );
+
+                localStorage.removeItem(
+                  "treba_user"
+                );
+
+                setStep("account");
+              }}
+              className="font-medium text-primary hover:underline"
+            >
+              Go back
+            </button>
+          </>
+        }
+      >
         {error && (
           <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
             {error}
@@ -771,313 +689,36 @@ export default function Register() {
         <div className="space-y-5">
 
           <div className="rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-            Check your email for the verification code
-            sent by Base44.
+            Enter the 6-digit verification
+            code generated for your mobile
+            number.
           </div>
 
           <div className="space-y-2">
 
-            <Label htmlFor="verificationCode">
+            <Label htmlFor="mobileOtp">
               Verification code
             </Label>
 
             <Input
-              id="verificationCode"
-              value={
-                verificationCode
-              }
+              id="mobileOtp"
+              value={mobileOtp}
               onChange={(event) =>
-                setVerificationCode(
+                setMobileOtp(
                   event.target.value
+                    .replace(/\D/g, "")
+                    .slice(0, 6)
                 )
               }
               inputMode="numeric"
               autoComplete="one-time-code"
-              placeholder="Enter verification code"
+              maxLength={6}
+              placeholder="123456"
               className="h-12 text-center text-lg tracking-widest"
               autoFocus
             />
 
           </div>
-
-          <Button
-            type="button"
-            className="h-12 w-full"
-            onClick={
-              handleEmailVerification
-            }
-            disabled={
-              loading ||
-              !verificationCode.trim()
-            }
-          >
-
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verifying...
-              </>
-            ) : (
-              "Verify email"
-            )}
-
-          </Button>
-
-        </div>
-
-      </AuthLayout>
-    );
-  }
-
-  /*
-   * =========================================================
-   * PASSENGER DETAILS SCREEN
-   * =========================================================
-   */
-
-  if (
-    step ===
-    "passengerDetails"
-  ) {
-    return (
-      <AuthLayout
-        icon={Luggage}
-        title="Complete your passenger profile"
-        subtitle="Tell us a bit about you so we can manage your trips."
-      >
-
-        {error && (
-          <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-
-        <form
-          onSubmit={
-            handlePassengerDetailsSubmit
-          }
-          className="space-y-5"
-        >
-
-          {/* PHOTO */}
-
-          <div className="flex items-center gap-4">
-
-            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-primary">
-
-              {photoUrl ? (
-                <img
-                  src={photoUrl}
-                  alt="Profile"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <Luggage className="h-7 w-7" />
-              )}
-
-            </div>
-
-            <div>
-
-              <input
-                id="passenger-photo"
-                type="file"
-                accept="image/*"
-                onChange={handlePhoto}
-                className="hidden"
-              />
-
-              <Label
-                htmlFor="passenger-photo"
-                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
-              >
-
-                {uploadingPhoto ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Upload"
-                )}
-
-                {photoUrl
-                  ? "Change photo"
-                  : "Add photo (optional)"}
-
-              </Label>
-
-            </div>
-
-          </div>
-
-          {/* FULL NAME */}
-
-          <div className="space-y-2">
-
-            <Label>
-              Full name
-            </Label>
-
-            <Input
-              value={fullName}
-              onChange={(event) =>
-                setFullName(
-                  event.target.value
-                )
-              }
-              placeholder="Jane Doe"
-              className="h-12"
-              required
-            />
-
-          </div>
-
-          {/* MOBILE */}
-
-          <div className="space-y-2">
-
-            <Label>
-              Mobile number
-            </Label>
-
-            <Input
-              type="tel"
-              value={phone}
-              onChange={(event) =>
-                setPhone(
-                  event.target.value
-                )
-              }
-              placeholder="081 123 4567"
-              className="h-12"
-              required
-            />
-
-          </div>
-
-          {/* CONTACT */}
-
-          <div className="space-y-2">
-
-            <Label>
-              Preferred contact method
-            </Label>
-
-            <select
-              value={
-                preferredContact
-              }
-              onChange={(event) =>
-                setPreferredContact(
-                  event.target.value
-                )
-              }
-              className="h-12 w-full rounded-md border border-input bg-background px-3 text-sm"
-            >
-
-              {CONTACT_METHODS.map(
-                (method) => (
-                  <option
-                    key={
-                      method.value
-                    }
-                    value={
-                      method.value
-                    }
-                  >
-                    {method.label}
-                  </option>
-                )
-              )}
-
-            </select>
-
-          </div>
-
-          {/* EMERGENCY */}
-
-          <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
-
-            <div className="text-sm font-semibold">
-              Emergency contact
-            </div>
-
-            <Input
-              value={
-                emergencyName
-              }
-              onChange={(event) =>
-                setEmergencyName(
-                  event.target.value
-                )
-              }
-              placeholder="Contact name (optional)"
-              className="h-11"
-            />
-
-            <Input
-              type="tel"
-              value={
-                emergencyPhone
-              }
-              onChange={(event) =>
-                setEmergencyPhone(
-                  event.target.value
-                )
-              }
-              placeholder="Contact phone (optional)"
-              className="h-11"
-            />
-
-          </div>
-
-          <Button
-            type="submit"
-            className="h-12 w-full"
-          >
-            Continue
-          </Button>
-
-        </form>
-
-      </AuthLayout>
-    );
-  }
-
-  /*
-   * =========================================================
-   * PASSENGER MOBILE OTP
-   * =========================================================
-   */
-
-  if (
-    step === "mobileOtp"
-  ) {
-    return (
-      <AuthLayout
-        icon={ShieldCheck}
-        title="Verify your mobile number"
-        subtitle={`Enter the code sent to ${phone}`}
-      >
-
-        {error && (
-          <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-
-        <div className="space-y-5">
-
-          <Input
-            value={mobileOtp}
-            onChange={(event) =>
-              setMobileOtp(
-                event.target.value
-              )
-            }
-            maxLength={6}
-            inputMode="numeric"
-            placeholder="6-digit code"
-            className="h-12 text-center text-lg tracking-widest"
-          />
 
           <Button
             type="button"
@@ -1090,7 +731,6 @@ export default function Register() {
               mobileOtp.length !== 6
             }
           >
-
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1099,11 +739,9 @@ export default function Register() {
             ) : (
               "Verify & finish"
             )}
-
           </Button>
 
         </div>
-
       </AuthLayout>
     );
   }
@@ -1139,7 +777,9 @@ export default function Register() {
         </div>
       )}
 
-      {/* GOOGLE */}
+      {/* =====================================================
+          GOOGLE
+          ===================================================== */}
 
       <Button
         type="button"
@@ -1148,14 +788,14 @@ export default function Register() {
         onClick={handleGoogle}
         disabled={loading}
       >
-
         <GoogleIcon className="mr-2 h-5 w-5" />
 
         Continue with Google
-
       </Button>
 
-      {/* DIVIDER */}
+      {/* =====================================================
+          DIVIDER
+          ===================================================== */}
 
       <div className="relative mb-6">
 
@@ -1164,16 +804,16 @@ export default function Register() {
         </div>
 
         <div className="relative flex justify-center text-xs uppercase">
-
           <span className="bg-card px-3 text-muted-foreground">
             or
           </span>
-
         </div>
 
       </div>
 
-      {/* FORM */}
+      {/* =====================================================
+          FORM
+          ===================================================== */}
 
       <form
         onSubmit={
@@ -1192,6 +832,8 @@ export default function Register() {
 
           <div className="grid grid-cols-2 gap-3">
 
+            {/* PASSENGER */}
+
             <button
               type="button"
               onClick={() =>
@@ -1207,7 +849,6 @@ export default function Register() {
               <Luggage className="h-5 w-5 text-primary" />
 
               <div>
-
                 <div className="text-sm font-semibold">
                   Passenger
                 </div>
@@ -1215,10 +856,11 @@ export default function Register() {
                 <div className="text-xs text-muted-foreground">
                   Request trips & travel
                 </div>
-
               </div>
 
             </button>
+
+            {/* DRIVER */}
 
             <button
               type="button"
@@ -1235,18 +877,78 @@ export default function Register() {
               <Car className="h-5 w-5 text-primary" />
 
               <div>
-
                 <div className="text-sm font-semibold">
                   Driver
                 </div>
 
                 <div className="text-xs text-muted-foreground">
-                  Receive allocations & earn
+                  Receive trips & earn
                 </div>
-
               </div>
 
             </button>
+
+          </div>
+
+        </div>
+
+        {/* FULL NAME */}
+
+        <div className="space-y-2">
+
+          <Label htmlFor="fullName">
+            Full name
+          </Label>
+
+          <div className="relative">
+
+            <UserPlus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+            <Input
+              id="fullName"
+              type="text"
+              autoComplete="name"
+              placeholder="Jane Doe"
+              value={fullName}
+              onChange={(event) =>
+                setFullName(
+                  event.target.value
+                )
+              }
+              className="h-12 pl-10"
+              required
+            />
+
+          </div>
+
+        </div>
+
+        {/* MOBILE */}
+
+        <div className="space-y-2">
+
+          <Label htmlFor="phone">
+            Mobile number
+          </Label>
+
+          <div className="relative">
+
+            <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+            <Input
+              id="phone"
+              type="tel"
+              autoComplete="tel"
+              placeholder="081 123 4567"
+              value={phone}
+              onChange={(event) =>
+                setPhone(
+                  event.target.value
+                )
+              }
+              className="h-12 pl-10"
+              required
+            />
 
           </div>
 
@@ -1268,7 +970,6 @@ export default function Register() {
               id="email"
               type="email"
               autoComplete="email"
-              autoFocus
               placeholder="you@example.com"
               value={email}
               onChange={(event) =>
@@ -1332,9 +1033,7 @@ export default function Register() {
               type="password"
               autoComplete="new-password"
               placeholder="Repeat password"
-              value={
-                confirmPassword
-              }
+              value={confirmPassword}
               onChange={(event) =>
                 setConfirmPassword(
                   event.target.value
