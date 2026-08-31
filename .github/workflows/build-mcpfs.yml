@@ -30,4 +30,4 @@ jobs:
         with:
           context: ./mcpfs-deploy
           push: true
-          tags: ghcr.io/niklaasseibeb-arc/treba-mcpfs:latest
+          tags: ghcr.io/niklaasseibeb-arch/treba-mcpfs:latest
