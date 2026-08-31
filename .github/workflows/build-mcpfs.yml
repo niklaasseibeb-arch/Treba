@@ -1,6 +1,9 @@
 name: Build MCP Filesystem
 
 on:
+  push:
+    branches:
+      - treba-azure-migration
   workflow_dispatch:
 
 jobs:
@@ -12,7 +15,8 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -21,9 +25,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push MCP filesystem
         uses: docker/build-push-action@v6
         with:
           context: ./mcpfs-deploy
           push: true
-          tags: ghcr.io/niklaassseibeb-arc/treba-mcpfs:latest
+          tags: ghcr.io/niklaasseibeb-arc/treba-mcpfs:latest
